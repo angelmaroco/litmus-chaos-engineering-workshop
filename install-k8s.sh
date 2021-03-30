@@ -113,7 +113,8 @@ TESTING_NAMESPACE='testing'
 URL_SERVICE=$(minikube service app-sample --url -n "${TESTING_NAMESPACE}")
 while true; do sleep 1; curl --connect-timeout 3 ${URL_SERVICE}; echo -e ' '$(date);done
 
-watch -n 1 kubectl get pods -n testing
+TESTING_NAMESPACE='testing'
+watch -n 1 kubectl get pods -n "${TESTING_NAMESPACE}"
 
 
 ##########################

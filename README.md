@@ -118,14 +118,18 @@ app-sample-7ff489dbd5-82ppw   1/1     Running   0          45m
 app-sample-7ff489dbd5-jg9vh   1/1     Running   0          45m
 ```
 
-:information_source: En el panel 3 ejecutar el siguiente código para recibir la respuesta de la aplicación. 
+:information_source: En el **panel 3** ejecutar el siguiente código para recibir la respuesta de la aplicación. 
 ```bash
 TESTING_NAMESPACE='testing'
 URL_SERVICE=$(minikube service app-sample --url -n "${TESTING_NAMESPACE}")
 while true; do sleep 5; curl --connect-timeout 3 ${URL_SERVICE}; echo -e ' '$(date);done
 ```
 
-![Console tabs 3](./docs/img/console-tabs-3.png)
+:information_source: En el **panel 4** ejecutar el siguiente código para ver el estado de los pods:
+```bash
+TESTING_NAMESPACE='testing'
+watch -n 1 kubectl get pods -n "${TESTING_NAMESPACE}"
+```
 
 ### **Instalación *Chaos Experiments***
 
