@@ -1,5 +1,7 @@
 # **Chaos Engineering sobre Kubernetes con Litmus**
 
+![litmus logo](./docs/img/cloud-native-way.png)
+
 - [**Chaos Engineering sobre Kubernetes con Litmus**](#chaos-engineering-sobre-kubernetes-con-litmus)
   - [**Sobre *Chaos Engineering***](#sobre-chaos-engineering)
   - [**Componentes Litmus**](#componentes-litmus)
