@@ -1,0 +1,49 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: app-sample-chaos
+  namespace: testing
+spec:
+  annotationCheck: "true"
+  engineState: "active"
+  appinfo:
+    appns: "testing"
+    applabel: "app.kubernetes.io/name=app-sample"
+    appkind: "deployment"
+  chaosServiceAccount: container-kill-sa
+  monitoring: true
+  jobCleanUpPolicy: "delete"
+  experiments:
+    - name: container-kill
+      spec:
+        components:
+          env:
+            # provide the chaos interval
+            - name: CHAOS_INTERVAL
+              value: "10"
+
+            # provide the total chaos duration
+            - name: TOTAL_CHAOS_DURATION
+              value: "20"
+
+            - name: CONTAINER_RUNTIME
+              value: "docker"
+
+            - name: SOCKET_PATH
+              value: "/var/run/docker.sock"
+        probe:
+          - name: "check-frontend-access-url"
+            type: "httpProbe"
+            httpProbe/inputs:
+              url: "http://app-sample.testing.svc.cluster.local:8080"
+              insecureSkipVerify: false
+              method:
+                get:
+                  criteria: ==
+                  responseCode: "200"
+            mode: "Continuous"
+            runProperties:
+              probeTimeout: 5
+              interval: 5
+              retry: 1
+              probePollingInterval: 2

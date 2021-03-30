@@ -1,0 +1,44 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: app-sample-chaos
+  namespace: testing
+spec:
+  appinfo:
+    appns: "testing"
+    applabel: "app.kubernetes.io/name=app-sample"
+    appkind: "deployment"
+  annotationCheck: "true"
+  engineState: "active"
+  auxiliaryAppInfo: ""
+  chaosServiceAccount: pod-autoscaler-sa
+  monitoring: true
+  jobCleanUpPolicy: "delete"
+  experiments:
+    - name: pod-autoscaler
+      spec:
+        components:
+          env:
+            # set chaos duration (in sec) as desired
+            - name: TOTAL_CHAOS_DURATION
+              value: "60"
+
+            # number of replicas to scale
+            - name: REPLICA_COUNT
+              value: "70"
+        probe:
+          - name: "check-frontend-access-url"
+            type: "httpProbe"
+            httpProbe/inputs:
+              url: "http://app-sample.testing.svc.cluster.local:8080"
+              insecureSkipVerify: false
+              method:
+                get:
+                  criteria: ==
+                  responseCode: "200"
+            mode: "Continuous"
+            runProperties:
+              probeTimeout: 5
+              interval: 5
+              retry: 1
+              probePollingInterval: 2

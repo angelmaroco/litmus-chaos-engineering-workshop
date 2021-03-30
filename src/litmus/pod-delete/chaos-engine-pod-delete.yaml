@@ -1,0 +1,51 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: app-sample-chaos
+  namespace: testing
+spec:
+  appinfo:
+    appns: "testing"
+    applabel: "app.kubernetes.io/name=app-sample"
+    appkind: "deployment"
+  annotationCheck: "true"
+  engineState: "active"
+  auxiliaryAppInfo: ""
+  chaosServiceAccount: pod-delete-sa
+  monitoring: true
+  jobCleanUpPolicy: "delete"
+  experiments:
+    - name: pod-delete
+      spec:
+        components:
+          env:
+            # set chaos duration (in sec) as desired
+            - name: TOTAL_CHAOS_DURATION
+              value: "30"
+
+            # set chaos interval (in sec) as desired
+            - name: CHAOS_INTERVAL
+              value: "5"
+
+            # pod failures without '--force' & default terminationGracePeriodSeconds
+            - name: FORCE
+              value: "false"
+
+            - name: PODS_AFFECTED_PERC
+              value: "2"
+        probe:
+          - name: "check-frontend-access-url"
+            type: "httpProbe"
+            httpProbe/inputs:
+              url: "http://app-sample.testing.svc.cluster.local:8080"
+              insecureSkipVerify: false
+              method:
+                get:
+                  criteria: ==
+                  responseCode: "200"
+            mode: "Continuous"
+            runProperties:
+              probeTimeout: 5
+              interval: 5
+              retry: 1
+              probePollingInterval: 2

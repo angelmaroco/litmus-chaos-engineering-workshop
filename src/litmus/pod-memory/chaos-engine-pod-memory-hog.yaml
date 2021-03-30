@@ -1,0 +1,45 @@
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosEngine
+metadata:
+  name: app-sample-chaos
+  namespace: testing
+spec:
+  # It can be true/false
+  annotationCheck: "true"
+  # It can be active/stop
+  engineState: "active"
+  appinfo:
+    appns: "testing"
+    applabel: "app.kubernetes.io/name=app-sample"
+    appkind: "deployment"
+  chaosServiceAccount: pod-memory-hog-sa
+  monitoring: true
+  # It can be delete/retain
+  jobCleanUpPolicy: "retain"
+  experiments:
+    - name: pod-memory-hog
+      spec:
+        components:
+          env:
+            # Enter the amount of memory in megabytes to be consumed by the application pod
+            - name: MEMORY_CONSUMPTION
+              value: "500"
+
+            - name: TOTAL_CHAOS_DURATION
+              value: "120" # in seconds
+        probe:
+          - name: "check-frontend-access-url"
+            type: "httpProbe"
+            httpProbe/inputs:
+              url: "http://app-sample.testing.svc.cluster.local:8080"
+              insecureSkipVerify: false
+              method:
+                get:
+                  criteria: ==
+                  responseCode: "200"
+            mode: "Continuous"
+            runProperties:
+              probeTimeout: 5
+              interval: 5
+              retry: 1
+              probePollingInterval: 2
