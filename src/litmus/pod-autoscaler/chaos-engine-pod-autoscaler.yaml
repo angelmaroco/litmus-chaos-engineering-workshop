@@ -13,7 +13,7 @@ spec:
   auxiliaryAppInfo: ""
   chaosServiceAccount: pod-autoscaler-sa
   monitoring: true
-  jobCleanUpPolicy: "delete"
+  jobCleanUpPolicy: "retain"
   experiments:
     - name: pod-autoscaler
       spec:
@@ -25,7 +25,7 @@ spec:
 
             # number of replicas to scale
             - name: REPLICA_COUNT
-              value: "70"
+              value: "10"
         probe:
           - name: "check-frontend-access-url"
             type: "httpProbe"

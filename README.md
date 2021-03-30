@@ -21,7 +21,7 @@
       - [**Container Kill**](#container-kill)
       - [**pod-autoscaler**](#pod-autoscaler)
       - [**Pod CPU Hog**](#pod-cpu-hog)
-      - [**Pod Memory Hog**](#pod-memory-hog)
+      - [**Extra - Otros experimentos**](#extra---otros-experimentos)
     - [**Planificación de experimentos**](#planificación-de-experimentos)
     - [**Litmus UI Portal**](#litmus-ui-portal)
   - [**Guía Litmus para desarrolladores**](#guía-litmus-para-desarrolladores)
@@ -167,6 +167,8 @@ pod-network-loss          6s
 
 ### **Despliegue servicios monitorización: Prometheus + Grafana**
 
+Litmus permite exportar la información de los experimentos a Prometheus a través de *chaos-exporter*.
+
 ```bash
 # create namespace litmus
 kubectl -n ${MONITORING_NAMESPACE} apply -f src/litmus/monitoring/utils/prometheus/prometheus-operator/
@@ -183,8 +185,21 @@ kubectl -n ${MONITORING_NAMESPACE} apply -f src/litmus/monitoring/utils/promethe
 
 kubectl -n ${MONITORING_NAMESPACE} apply -f src/litmus/monitoring/utils/grafana/
 
-minikube service grafana -n ${MONITORING_NAMESPACE} > /dev/null &
+echo "Acceso dashboard --> $(minikube service grafana -n ${MONITORING_NAMESPACE} --url)/d/nodepodmetrics/node-and-pod-chaos-metrics?orgId=1&refresh=5s"
 ```
+
+Para este workshop hemos personalizado un dashboard de grafana donde visualizaremos:
+
+- Timelime de experimentos ejecutados
+- 4 gráficas tipo "Gauge" con número de total de experimentos, estado Pass, estado Fail y estado Awaited.
+- Consumo de cpu a nivel POD (app-sample)
+- Consumo de memoria a nivel POD (app-sample)
+
+Datos acceso grafana: 
+- usuario: admin
+- password: admin
+
+![others-exp](./docs/img/others-exp.png)
 
 ### **Creación de anotación "litmuschaos"**
 
@@ -455,16 +470,18 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréi
     Events:
         Type    Reason   Age    From                         Message
         ----    ------   ----   ----                         -------
-        Normal  Awaited  3m52s  container-kill-fs68ut-p9ps7  experiment: container-kill, Result: Awaited
-        Normal  Pass     2m7s   container-kill-fs68ut-p9ps7  experiment: container-kill, Result: Pass
+        Normal  Awaited  4m48s  container-kill-5i56m6-4pkxg  experiment: container-kill, Result: Awaited
+        Normal  Pass     4m4s   container-kill-5i56m6-4pkxg  experiment: container-kill, Result: Pass
     
     
     $ kubectl get pods -n testing
     
     NAME                          READY   STATUS    RESTARTS   AGE
-    app-sample-7ff489dbd5-82ppw   1/1     Running   2          9h
-    app-sample-7ff489dbd5-jg9vh   1/1     Running   0          9h
+    app-sample-6c48f8c4cc-74lvl   1/1     Running   2          25m
+    app-sample-6c48f8c4cc-msdmj   1/1     Running   0          25m
     ```
+
+    ![kill-container](./docs/img/kill-container.png)
 
 
 
@@ -479,26 +496,44 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréi
 - **Criterio de entrada:** 2 pods de app-sample en estado "Running"
   
   ```bash
-    kubectl get pods -n "${TESTING_NAMESPACE}"
+    $ kubectl get pods -n "${TESTING_NAMESPACE}"
+
+    NAME                          READY   STATUS    RESTARTS   AGE
+    app-sample-6c48f8c4cc-74lvl   1/1     Running   2          29m
+    app-sample-6c48f8c4cc-msdmj   1/1     Running   0          28m
+
 
   ```
 
 - **Parámetros de entrada experimento:**
 
     ```yaml
+    experiments:
+      - name: pod-autoscaler
+        spec:
+          components:
+            env:
+              # set chaos duration (in sec) as desired
+              - name: TOTAL_CHAOS_DURATION
+                value: "60"
+
+              # number of replicas to scale
+              - name: REPLICA_COUNT
+                value: "10"
     ```
 
-- **Hipótesis:** Tenemos dos pods escuchando por el 8080 tras un balanceador. Nuestro deployment tiene readinessProbe con periodSeconds=1 y failureThreshold=1. Si uno de los pods deja de responder, el balanceador deja de enviar tráfico a ese pod y debe responder el otro. Hemos establecido el healthcheck del experimento cada 5s (tiempo máximo de respuesta aceptable) atacando directamente contra el balanceador, por lo que no deberíamos de tener pérdida de servicio en ningún momento. 
+- **Hipótesis:** Pendiete 
 
 - **Creación de SA, Role y RoleBinding**
 
     ```bash
-    
+    $ kubectl apply -f src/litmus/pod-autoscaler/pod-autoscaler-sa.yaml -n "${TESTING_NAMESPACE}"
     ```
 
 - **Ejecución de experimento**
 
     ```bash
+    $ kubectl apply -f src/litmus/pod-autoscaler/chaos-engine-pod-autoscaler.yaml  -n "${TESTING_NAMESPACE}"
     ```
 
 - **Observaciones:**
@@ -524,44 +559,107 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréi
         probePollingInterval: 2
     ```
 
-- **Resultado:** resultado "Pass" (dos pods en estado "Running", sin pérdida de servicio durante la duración del experimento)
+- **Resultado:** Pendiente
 
     ```bash
-    $ kubectl describe chaosresult app-sample-chaos-container-kill -n "${TESTING_NAMESPACE}" 
+    $ kubectl describe chaosresult app-sample-chaos-pod-autoscaler  -n "${TESTING_NAMESPACE}"
+
+    Spec:
+        Engine:      app-sample-chaos
+        Experiment:  pod-autoscaler
+    Status:
+        Experimentstatus:
+            Fail Step:                 N/A
+            Phase:                     Completed
+            Probe Success Percentage:  100
+            Verdict:                   Pass
+    History:
+        Failed Runs:   0
+        Passed Runs:   6
+        Stopped Runs:  0
+    Probe Status:
+        Name:  check-frontend-access-url
+        Status:
+            Continuous:  Passed 👍
+        Type:            httpProbe
+    Events:
+        Type    Reason   Age    From                         Message
+        ----    ------   ----   ----                         -------
+        Normal  Awaited  4m46s  pod-autoscaler-95wa6x-858jv  experiment: pod-autoscaler, Result: Awaited
+        Normal  Pass     3m32s  pod-autoscaler-95wa6x-858jv  experiment: pod-autoscaler, Result: Pass
 
     $ kubectl get pods -n testing
     
+    NAME                          READY   STATUS        RESTARTS   AGE
+    app-sample-6c48f8c4cc-5kzpg   0/1     Completed     0          39s
+    app-sample-6c48f8c4cc-74lvl   1/1     Running       2          32m
+    app-sample-6c48f8c4cc-bflws   0/1     Completed     0          39s
+    app-sample-6c48f8c4cc-c5ls8   0/1     Completed     0          39s
+    app-sample-6c48f8c4cc-d9zj4   0/1     Completed     0          39s
+    app-sample-6c48f8c4cc-f2xnt   0/1     Completed     0          39s
+    app-sample-6c48f8c4cc-f7qdl   0/1     Completed     0          39s
+    app-sample-6c48f8c4cc-ff84v   0/1     Completed     0          39s
+    app-sample-6c48f8c4cc-k29rr   1/1     Completed     0          39s
+    app-sample-6c48f8c4cc-l5fqp   0/1     Completed     0          39s
+    app-sample-6c48f8c4cc-m587t   0/1     Completed     0          39s
+    app-sample-6c48f8c4cc-msdmj   1/1     Running       0          32m
+    app-sample-6c48f8c4cc-n5h6l   0/1     Completed     0          39s
+    app-sample-6c48f8c4cc-qr5nd   0/1     Completed     0          39s
+    app-sample-chaos-runner       1/1     Completed     0          47s
+    pod-autoscaler-95wa6x-858jv   1/1     Completed     0          45s
     ```
+
+    ![pod-autoscaler](./docs/img/pod-autoscaler.png)
 
 #### **Pod CPU Hog**
 
-- **Descripción:**
+- **Descripción:** permite consumir recursos de CPU dentro de POD
 
-- **Información oficial del experimento:** [enlace](https://docs.litmuschaos.io/docs/pod-memory-hog/)
+- **Información oficial del experimento:** [enlace](https://docs.litmuschaos.io/docs/pod-cpu-hog/)
   
 - **Criterio de entrada:** 2 pods de app-sample en estado "Running"
   
   ```bash
     kubectl get pods -n "${TESTING_NAMESPACE}"
 
+    NAME                          READY   STATUS    RESTARTS   AGE
+    app-sample-6c48f8c4cc-74lvl   1/1     Running   2          52m
+    app-sample-6c48f8c4cc-msdmj   1/1     Running   0          52m
+
   ```
 
 - **Parámetros de entrada experimento:**
 
     ```yaml
+    experiments:
+      - name: pod-cpu-hog
+        spec:
+          components:
+            env:
+              #number of cpu cores to be consumed
+              #verify the resources the app has been launched with
+              - name: CPU_CORES
+                value: "1"
+
+              - name: TOTAL_CHAOS_DURATION
+                value: "60" # in seconds
+
+              - name: PODS_AFFECTED_PERC
+                value: "2"
     ```
 
-- **Hipótesis:** Tenemos dos pods escuchando por el 8080 tras un balanceador. Nuestro deployment tiene readinessProbe con periodSeconds=1 y failureThreshold=1. Si uno de los pods deja de responder, el balanceador deja de enviar tráfico a ese pod y debe responder el otro. Hemos establecido el healthcheck del experimento cada 5s (tiempo máximo de respuesta aceptable) atacando directamente contra el balanceador, por lo que no deberíamos de tener pérdida de servicio en ningún momento. 
+- **Hipótesis:** Pendiente. 
 
 - **Creación de SA, Role y RoleBinding**
 
     ```bash
-    
+    kubectl apply -f src/litmus/pod-cpu-hog/pod-cpu-hog-sa.yaml -n "${TESTING_NAMESPACE}"
     ```
 
 - **Ejecución de experimento**
 
     ```bash
+    kubectl apply -f src/litmus/pod-cpu-hog/chaos-engine-pod-cpu-hog.yaml -n "${TESTING_NAMESPACE}"
     ```
 
 - **Observaciones:**
@@ -587,77 +685,74 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréi
         probePollingInterval: 2
     ```
 
-- **Resultado:** resultado "Pass" (dos pods en estado "Running", sin pérdida de servicio durante la duración del experimento)
+- **Resultado:** Pendiente
 
     ```bash
-    $ kubectl describe chaosresult app-sample-chaos-container-kill -n "${TESTING_NAMESPACE}" 
+    $ kubectl describe chaosresult app-sample-chaos-pod-cpu-hog -n "${TESTING_NAMESPACE}" 
+
+    Spec:
+        Engine:      app-sample-chaos
+        Experiment:  pod-cpu-hog
+    Status:
+        Experimentstatus:
+            Fail Step:                 N/A
+            Phase:                     Completed
+            Probe Success Percentage:  100
+            Verdict:                   Pass
+    History:
+        Failed Runs:   0
+        Passed Runs:   6
+        Stopped Runs:  0
+    Probe Status:
+        Name:  check-frontend-access-url
+        Status:
+            Continuous:  Passed 👍
+        Type:            httpProbe
+    Events:
+        Type    Reason   Age    From                         Message
+        ----    ------   ----   ----                         -------
+        Normal  Awaited  2m23s  pod-cpu-hog-mpen59-zcpr6  experiment: pod-cpu-hog, Result: Awaited
+        Normal  Pass     74s    pod-cpu-hog-mpen59-zcpr6  experiment: pod-cpu-hog, Result: Pass
 
     $ kubectl get pods -n testing
-    
+
+      NAME                          READY   STATUS    RESTARTS   AGE
+      app-sample-6c48f8c4cc-74lvl   1/1     Running   2          56m
+      app-sample-6c48f8c4cc-msdmj   1/1     Running   0          56m
+      app-sample-6c48f8c4cc-zbl9m   1/1     Running   0          61s
     ```
 
-#### **Pod Memory Hog**
+    ![pod-cpu](./docs/img/pod-cpu.png)
 
-- **Descripción:**
 
-- **Información oficial del experimento:** [enlace](https://docs.litmuschaos.io/docs/pod-memory-hog/)
-  
-- **Criterio de entrada:** 2 pods de app-sample en estado "Running"
-  
+#### **Extra - Otros experimentos**
+
+- **pod-network-loss**
+
   ```bash
-    kubectl get pods -n "${TESTING_NAMESPACE}"
+  kubectl apply -f src/litmus/pod-network-loss/pod-network-loss-sa.yaml -n "${TESTING_NAMESPACE}"
 
+  kubectl apply -f src/litmus/pod-network-loss/chaos-engine-pod-network-loss.yaml  -n "${TESTING_NAMESPACE}"
+
+  kubectl describe chaosresult app-sample-chaos-pod-network-loss -n "${TESTING_NAMESPACE}"
+  ```
+- **pod-memory-hog**
+  ```bash
+  kubectl apply -f src/litmus/pod-memory/pod-memory-hog-sa.yaml -n "${TESTING_NAMESPACE}"
+
+  kubectl apply -f src/litmus/pod-memory/chaos-engine-pod-memory-hog.yaml  -n "${TESTING_NAMESPACE}"
+
+  kubectl describe chaosresult app-sample-chaos-pod-memory-hog -n "${TESTING_NAMESPACE}" 
   ```
 
-- **Parámetros de entrada experimento:**
+- **pod-delete**
+  ```bash
+  kubectl apply -f src/litmus/pod-delete/pod-delete-sa.yaml -n "${TESTING_NAMESPACE}"
 
-    ```yaml
-    ```
+  kubectl apply -f src/litmus/pod-delete/chaos-engine-pod-delete.yaml -n "${TESTING_NAMESPACE}"
 
-- **Hipótesis:** Tenemos dos pods escuchando por el 8080 tras un balanceador. Nuestro deployment tiene readinessProbe con periodSeconds=1 y failureThreshold=1. Si uno de los pods deja de responder, el balanceador deja de enviar tráfico a ese pod y debe responder el otro. Hemos establecido el healthcheck del experimento cada 5s (tiempo máximo de respuesta aceptable) atacando directamente contra el balanceador, por lo que no deberíamos de tener pérdida de servicio en ningún momento. 
-
-- **Creación de SA, Role y RoleBinding**
-
-    ```bash
-    
-    ```
-
-- **Ejecución de experimento**
-
-    ```bash
-    ```
-
-- **Observaciones:**
-
-- **Validación:** Peticiones get al balanceador con respuesta 200.
-
-    ```yaml
-    probe:
-    - name: "check-frontend-access-url"
-        type: "httpProbe"
-        httpProbe/inputs:
-        url: "http://app-sample.testing.svc.cluster.local:8080"
-        insecureSkipVerify: false
-        method:
-            get:
-            criteria: ==
-            responseCode: "200"
-        mode: "Continuous"
-        runProperties:
-        probeTimeout: 5
-        interval: 5
-        retry: 1
-        probePollingInterval: 2
-    ```
-
-- **Resultado:** resultado "Pass" (dos pods en estado "Running", sin pérdida de servicio durante la duración del experimento)
-
-    ```bash
-    $ kubectl describe chaosresult app-sample-chaos-container-kill -n "${TESTING_NAMESPACE}" 
-
-    $ kubectl get pods -n testing
-    
-    ```
+  kubectl describe chaosresult app-sample-chaos-pod-delete -n "${TESTING_NAMESPACE}" 
+  ```
 
 ### **Planificación de experimentos**
 
