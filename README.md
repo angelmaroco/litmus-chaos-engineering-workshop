@@ -29,7 +29,8 @@
   - [**Guía Litmus para desarrolladores**](#guía-litmus-para-desarrolladores)
   - [***Chaos Engineering* en despliegue Continuo**](#chaos-engineering-en-despliegue-continuo)
   - [**Consideraciones finales**](#consideraciones-finales)
-  - [**Sobre el autor**](#sobre-el-autor)
+  - [**Licencia**](#licencia)
+  - [**Autor**](#autor)
   
 
 ## **Sobre *Chaos Engineering***
@@ -1013,9 +1014,12 @@ En este workshop
 
 Elaborar un plan de pruebas que te permita conocer el comportamiento íntegro de tu sistema puede ser una tarea relativamente compleja.En este workshop hemos trabajado la inyección de errores en kubernetes utilizando un único servicio bajo un único nodo, pero los sistemas distribuidos suelen ser mucho más complejos: decenas de microservicios ejecutando en múltiples nodos de k8s sobre infraestructura cloud, con alta disponibilidad implementada con multi-AZ/multi-region, comunicaciones con on-premise, etc.
 
+## **Licencia**
+Este workshop está licenciado bajo licencia MIT - ver [LICENSE](LICENSE) para más detalle.
 
+## **Autor**
 
-## **Sobre el autor**
+Ángel Maroco - [linkedIn](https://www.linkedin.com/in/angelmaroco/) | [github](https://github.com/angelmaroco)
 
 
 
