@@ -15,7 +15,7 @@ spec:
         app.kubernetes.io/name: app-sample
     spec:
       containers:
-        - image: gcr.io/google-samples/node-hello:1.0
+        - image: gcr.io/google_containers/nginx:1.7.9
           name: app-sample
           resources:
             limits:
@@ -25,13 +25,21 @@ spec:
               cpu: "200m"
               memory: "100M"
           ports:
-            - containerPort: 8080
-          readinessProbe:
-            httpGet:
-              port: 8080
-              path: /health
+            - containerPort: 80
+          livenessProbe:
             initialDelaySeconds: 1
-            periodSeconds: 1
+            periodSeconds: 2
             timeoutSeconds: 1
             successThreshold: 1
             failureThreshold: 1
+            httpGet:
+              host:
+              scheme: HTTP
+              path: /
+              port: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 5
+            timeoutSeconds: 5

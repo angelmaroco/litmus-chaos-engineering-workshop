@@ -30,7 +30,7 @@ spec:
           - name: "check-frontend-access-url"
             type: "httpProbe"
             httpProbe/inputs:
-              url: "http://app-sample.testing.svc.cluster.local:8080"
+              url: "http://app-sample.testing.svc.cluster.local"
               insecureSkipVerify: false
               method:
                 get:
