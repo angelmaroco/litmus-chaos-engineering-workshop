@@ -36,7 +36,7 @@
 
 ## **Componentes Litmus**
 
-* **ChaosEngine**
+* **ChaosEngine:**
 * **ChaosExperiment**
 * **ChaosSchedule**
 * **ChaosResult**
@@ -48,10 +48,10 @@
 
 Recomendamos abrir una consola y crear 4 paneles:
 
-1. Estado del sistema (ejecutar htop)
-2. Panel principal (ejecutaremos todo el contenido del workshop)
-3. Monitorización de la aplicación
-4. Monitorización de recursos kubernetes
+1. Panel principal (ejecutaremos todo el contenido del workshop)
+2. Monitorización de la aplicación de test
+3. Monitorización de pods
+4. Monitorización de eventos
    
 ![Console tabs](./docs/img/console-tabs.png)
 
@@ -100,37 +100,48 @@ MONITORING_NAMESPACE="monitoring"
 
 Desplegamos una aplicación de test para poder ejecutar los experimentos de litmus.
 * **nginx-deployment.yaml**: creación de despliegue "app-sample", con recursos de cpu/memoria "limits"/"request" y configuración de "readinessProbe". Exponemos el servicio en el puerto 8080 a través de un balanceador. 
-* **ngix-hpa.yaml**: creación de *Horizontal Pod Autoscaler* (min 2 réplicas / max 10 réplicas)
+* **nginx-hpa.yaml**: creación de *Horizontal Pod Autoscaler* (min 2 réplicas / max 10 réplicas)
 
 ```bash
 # deployment
 kubectl apply -f src/nginx/nginx-deployment.yaml --namespace="${TESTING_NAMESPACE}"
 
 # enable hpa
-kubectl apply -f src/nginx/ngix-hpa.yaml --namespace="${TESTING_NAMESPACE}"
+kubectl apply -f src/nginx/nginx-hpa.yaml --namespace="${TESTING_NAMESPACE}"
 
 # expose service 
-kubectl expose deployment app-sample --type=LoadBalancer --port=8080  -n "${TESTING_NAMESPACE}"
+kubectl expose deployment app-sample --type=LoadBalancer --port=80  -n "${TESTING_NAMESPACE}"
+
+# wait deployment
+kubectl wait --for=condition=available --timeout=60s deployment/app-sample -n "${TESTING_NAMESPACE}"
 
 # get pods
 kubectl get pods -n "${TESTING_NAMESPACE}"
+
+#-----------------------------------------
 
 NAME                          READY   STATUS    RESTARTS   AGE
 app-sample-7ff489dbd5-82ppw   1/1     Running   0          45m
 app-sample-7ff489dbd5-jg9vh   1/1     Running   0          45m
 ```
 
-:information_source: En el **panel 3** ejecutar el siguiente código para recibir la respuesta de la aplicación. 
+:information_source: En **PANEL 2** ejecutar: 
 ```bash
 TESTING_NAMESPACE='testing'
 URL_SERVICE=$(minikube service app-sample --url -n "${TESTING_NAMESPACE}")
-while true; do sleep 5; curl --connect-timeout 3 ${URL_SERVICE}; echo -e ' '$(date);done
+while true; do sleep 5; curl --connect-timeout 2 -s -o /dev/null -w "Response code %{http_code}"  ${URL_SERVICE}; echo -e ' - '$(date);done
+
 ```
 
-:information_source: En el **panel 4** ejecutar el siguiente código para ver el estado de los pods:
+:information_source: En **PANEL 3** ejecutar: 
 ```bash
 TESTING_NAMESPACE='testing'
 watch -n 1 kubectl get pods -n "${TESTING_NAMESPACE}"
+```
+
+:information_source: En **PANEL 4** ejecutar: 
+```bash
+kubectl get events -A -w
 ```
 
 ### **Instalación *Chaos Experiments***
@@ -144,6 +155,8 @@ kubectl apply -f https://hub.litmuschaos.io/api/chaos/1.13.0\?file\=charts/gener
 
 ```bash
 kubectl get chaosexperiments -n "${TESTING_NAMESPACE}"
+
+# ----------------------------------------------------
 
 NAME                      AGE
 container-kill            6s
@@ -191,6 +204,10 @@ kubectl -n ${MONITORING_NAMESPACE} apply -f src/litmus/monitoring/utils/promethe
 
 kubectl -n ${MONITORING_NAMESPACE} apply -f src/litmus/monitoring/utils/grafana/
 
+# wait deployment
+kubectl wait --for=condition=available --timeout=60s deployment/grafana -n ${MONITORING_NAMESPACE}
+kubectl wait --for=condition=available --timeout=60s deployment/prometheus-operator -n ${MONITORING_NAMESPACE}
+
 echo "Acceso dashboard --> $(minikube service grafana -n ${MONITORING_NAMESPACE} --url)/d/nodepodmetrics/node-and-pod-chaos-metrics?orgId=1&refresh=5s"
 ```
 
@@ -218,6 +235,8 @@ kubectl annotate deploy/app-sample litmuschaos.io/chaos="true" -n "${TESTING_NAM
 
 ```bash
 kubectl describe deploy/app-sample -n "${TESTING_NAMESPACE}"
+
+# -----------------------------------------------------------
 
 Name:                   app-sample
 Namespace:              testing
@@ -354,7 +373,7 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréi
           - name: "check-frontend-access-url" # Nombre de prueba
             type: "httpProbe"                 # Petición de tipo HTTP(S). Alternativas: cmdProbe, k8sProbe, promProbe.
             httpProbe/inputs:                  
-              url: "http://app-sample.testing.svc.cluster.local:8080" # URL a validar
+              url: "http://app-sample.testing.svc.cluster.local" # URL a validar
               insecureSkipVerify: false                               # Permitir HTTP sin TLS
               method:
                 get:                          # Petición tipo GET
@@ -381,6 +400,8 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréi
   
   ```bash
     kubectl get pods -n "${TESTING_NAMESPACE}"
+
+    # -----------------------------------------
 
     NAME                          READY   STATUS    RESTARTS   AGE
     app-sample-7ff489dbd5-82ppw   1/1     Running   0          9h
@@ -436,7 +457,7 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréi
     - name: "check-frontend-access-url"
         type: "httpProbe"
         httpProbe/inputs:
-        url: "http://app-sample.testing.svc.cluster.local:8080"
+        url: "http://app-sample.testing.svc.cluster.local"
         insecureSkipVerify: false
         method:
             get:
@@ -454,6 +475,8 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréi
 
     ```bash
     $ kubectl describe chaosresult app-sample-chaos-container-kill -n "${TESTING_NAMESPACE}" 
+
+    # --------------------------------------------------------------------------------------
 
     Spec:
         Engine:      app-sample-chaos
@@ -504,6 +527,8 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréi
   ```bash
     $ kubectl get pods -n "${TESTING_NAMESPACE}"
 
+    # ------------------------------------------
+
     NAME                          READY   STATUS    RESTARTS   AGE
     app-sample-6c48f8c4cc-74lvl   1/1     Running   2          29m
     app-sample-6c48f8c4cc-msdmj   1/1     Running   0          28m
@@ -551,7 +576,7 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréi
     - name: "check-frontend-access-url"
         type: "httpProbe"
         httpProbe/inputs:
-        url: "http://app-sample.testing.svc.cluster.local:8080"
+        url: "http://app-sample.testing.svc.cluster.local"
         insecureSkipVerify: false
         method:
             get:
@@ -569,6 +594,8 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréi
 
     ```bash
     $ kubectl describe chaosresult app-sample-chaos-pod-autoscaler  -n "${TESTING_NAMESPACE}"
+
+    # ----------------------------------------------------------------------------------------
 
     Spec:
         Engine:      app-sample-chaos
@@ -595,6 +622,8 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréi
         Normal  Pass     3m32s  pod-autoscaler-95wa6x-858jv  experiment: pod-autoscaler, Result: Pass
 
     $ kubectl get pods -n testing
+
+    # ---------------------------
     
     NAME                          READY   STATUS        RESTARTS   AGE
     app-sample-6c48f8c4cc-5kzpg   0/1     Completed     0          39s
@@ -627,6 +656,8 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréi
   
   ```bash
     kubectl get pods -n "${TESTING_NAMESPACE}"
+
+    # ---------------------------------------
 
     NAME                          READY   STATUS    RESTARTS   AGE
     app-sample-6c48f8c4cc-74lvl   1/1     Running   2          52m
@@ -677,7 +708,7 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréi
     - name: "check-frontend-access-url"
         type: "httpProbe"
         httpProbe/inputs:
-        url: "http://app-sample.testing.svc.cluster.local:8080"
+        url: "http://app-sample.testing.svc.cluster.local"
         insecureSkipVerify: false
         method:
             get:
@@ -695,6 +726,8 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréi
 
     ```bash
     $ kubectl describe chaosresult app-sample-chaos-pod-cpu-hog -n "${TESTING_NAMESPACE}" 
+
+    # -----------------------------------------------------------------------------------
 
     Spec:
         Engine:      app-sample-chaos
@@ -761,6 +794,187 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréi
   ```
 
 ### **Planificación de experimentos**
+
+Litmus soporta el uso de planificaciones de experimentos. Dispone de las siguientes opciones:
+
+- **Inmediato**
+
+```yaml
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosSchedule
+metadata:
+  name: schedule-nginx
+spec:
+  schedule:
+    now: true
+  engineTemplateSpec:
+    appinfo:
+      appns: testing
+      applabel: app.kubernetes.io/name=app-sample
+      appkind: deployment
+    annotationCheck: 'true'
+```
+
+- **Timestamp específico**
+
+```yaml
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosSchedule
+metadata:
+  name: schedule-nginx
+spec:
+  schedule:
+    once:
+      #should be modified according to current UTC Time
+      executionTime: "2020-05-12T05:47:00Z" 
+  engineTemplateSpec:
+    appinfo:
+      appns: testing
+      applabel: app.kubernetes.io/name=app-sample
+      appkind: deployment
+    annotationCheck: 'true'
+```
+
+- **Repeticiones**
+
+```yaml
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosSchedule
+metadata:
+  name: schedule-nginx
+spec:
+  schedule:
+    repeat:
+      properties:
+         #format should be like "10m" or "2h" accordingly for minutes or hours
+        minChaosInterval: "2m"  
+  engineTemplateSpec:
+    appinfo:
+      appns: testing
+      applabel: app.kubernetes.io/name=app-sample
+      appkind: deployment
+    annotationCheck: 'true'
+```
+
+- **Repeticiones entre un rango de fechas**
+
+```yaml
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosSchedule
+metadata:
+  name: schedule-nginx
+spec:
+  schedule:
+    repeat:
+      timeRange:
+        #should be modified according to current UTC Time
+        startTime: "2020-05-12T05:47:00Z"   
+        endTime: "2020-09-13T02:58:00Z"   
+      properties:
+        #format should be like "10m" or "2h" accordingly for minutes and hours
+        minChaosInterval: "2m"  
+  engineTemplateSpec:
+    appinfo:
+      appns: testing
+      applabel: app.kubernetes.io/name=app-sample
+      appkind: deployment
+    annotationCheck: 'true'
+```
+
+- **Repeticiones con una fecha de finalización**
+
+```yaml
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosSchedule
+metadata:
+  name: schedule-nginx
+spec:
+  schedule:
+    repeat:
+      timeRange:
+        #should be modified according to current UTC Time
+        endTime: "2020-09-13T02:58:00Z"   
+      properties:
+        #format should be like "10m" or "2h" accordingly for minutes and hours
+        minChaosInterval: "2m"   
+  engineTemplateSpec:
+    appinfo:
+      appns: testing
+      applabel: app.kubernetes.io/name=app-sample
+      appkind: deployment
+    annotationCheck: 'true'
+```
+
+- **Repeticiones desde una fecha de inicio (ejecuciones indefinidas)**
+
+```yaml
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosSchedule
+metadata:
+  name: schedule-nginx
+spec:
+  schedule:
+    repeat:
+      timeRange:
+        #should be modified according to current UTC Time
+        startTime: "2020-05-12T05:47:00Z"   
+      properties:
+         #format should be like "10m" or "2h" accordingly for minutes and hours
+        minChaosInterval: "2m" 
+  engineTemplateSpec:
+    appinfo:
+      appns: testing
+      applabel: app.kubernetes.io/name=app-sample
+      appkind: deployment
+    annotationCheck: 'true'
+```
+
+- **Ejecución entre horas con frecuencia**
+
+```yaml
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosSchedule
+metadata:
+  name: schedule-nginx
+spec:
+  schedule:
+    repeat:
+      properties:
+        #format should be like "10m" or "2h" accordingly for minutes and hours
+        minChaosInterval: "2m"   
+      workHours:
+        # format should be <starting-hour-number>-<ending-hour-number>(inclusive)
+        includedHours: 0-12
+  engineTemplateSpec:
+    appinfo:
+      appns: testing
+      applabel: app.kubernetes.io/name=app-sample
+      appkind: deployment
+    annotationCheck: 'true'
+```
+
+- **Ejecuciones períodicas en días específicos**
+
+```yaml
+apiVersion: litmuschaos.io/v1alpha1
+kind: ChaosSchedule
+metadata:
+  name: schedule-nginx
+spec:
+  schedule:
+    repeat:
+      properties:
+        #format should be like "10m" or "2h" accordingly for minutes and hours
+        minChaosInterval: "2m"   
+      workDays:
+        includedDays: "Mon,Tue,Wed,Sat,Sun"
+  engineTemplateSpec:
+    appinfo:
+      appns: testing
+      applabel: app.kubernetes.io/name=app-sample
+      appkind: deployment
+    annotationCheck: 'true'
+```
 
 ### **Litmus UI Portal**
 

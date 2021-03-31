@@ -39,10 +39,10 @@ kubectl get pods -A
 kubectl apply -f src/nginx/nginx-deployment.yaml --namespace="${TESTING_NAMESPACE}"
 
 # enable hpa
-kubectl apply -f src/nginx/ngix-hpa.yaml --namespace="${TESTING_NAMESPACE}"
+kubectl apply -f src/nginx/nginx-hpa.yaml --namespace="${TESTING_NAMESPACE}"
 
 # expose service 
-kubectl expose deployment app-sample --type=LoadBalancer --port=8080  -n "${TESTING_NAMESPACE}"
+kubectl expose deployment app-sample --type=LoadBalancer --port=80  -n "${TESTING_NAMESPACE}"
 
 # add annotate (enable chaos)
 kubectl annotate deploy/app-sample litmuschaos.io/chaos="true" -n "${TESTING_NAMESPACE}"
