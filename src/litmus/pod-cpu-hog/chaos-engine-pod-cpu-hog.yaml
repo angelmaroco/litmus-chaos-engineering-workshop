@@ -30,7 +30,7 @@ spec:
               value: "60" # in seconds
 
             - name: PODS_AFFECTED_PERC
-              value: "2"
+              value: "0"
         probe:
           - name: "check-frontend-access-url"
             type: "httpProbe"

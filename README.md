@@ -7,8 +7,9 @@
   - [**Componentes Litmus**](#componentes-litmus)
   - [**Workshop**](#workshop)
     - [**Preparación de consola**](#preparación-de-consola)
-    - [**Creación de entorno de pruebas con minikube**](#creación-de-entorno-de-pruebas-con-minikube)
-    - [**Creación de namespaces**](#creación-de-namespaces)
+    - [**Clonación de repositorio**](#clonación-de-repositorio)
+    - [**Creación de entorno de pruebas K8s con minikube**](#creación-de-entorno-de-pruebas-k8s-con-minikube)
+    - [**Creación de namespaces K8s**](#creación-de-namespaces-k8s)
     - [**Despliegue de aplicación de test**](#despliegue-de-aplicación-de-test)
     - [**Instalación *Chaos Experiments***](#instalación-chaos-experiments)
     - [**Despliegue servicios monitorización: Prometheus + Grafana**](#despliegue-servicios-monitorización-prometheus--grafana)
@@ -21,14 +22,16 @@
         - [**Especificaciones de pruebas**](#especificaciones-de-pruebas)
     - [**Ejecución de experimentos**](#ejecución-de-experimentos)
       - [**Container Kill**](#container-kill)
-      - [**pod-autoscaler**](#pod-autoscaler)
+      - [**Pod autoscaler**](#pod-autoscaler)
       - [**Pod CPU Hog**](#pod-cpu-hog)
       - [**Extra - Otros experimentos**](#extra---otros-experimentos)
     - [**Planificación de experimentos**](#planificación-de-experimentos)
-    - [**Litmus UI Portal**](#litmus-ui-portal)
+  - [**LitmusChaos + *Load Test Performance* con Jmeter**](#litmuschaos--load-test-performance-con-jmeter)
+  - [**Litmus UI Portal**](#litmus-ui-portal)
   - [**Guía Litmus para desarrolladores**](#guía-litmus-para-desarrolladores)
   - [***Chaos Engineering* en despliegue Continuo**](#chaos-engineering-en-despliegue-continuo)
   - [**Consideraciones finales**](#consideraciones-finales)
+  - [**Referencias**](#referencias)
   - [**Licencia**](#licencia)
   - [**Autor**](#autor)
   
@@ -56,7 +59,14 @@ Recomendamos abrir una consola y crear 4 paneles:
    
 ![Console tabs](./docs/img/console-tabs.png)
 
-### **Creación de entorno de pruebas con minikube**
+### **Clonación de repositorio**
+
+```bash
+git clone git@github.com:angelmaroco/litmus-chaos-engineering-workshop.git
+cd litmus-chaos-engineering-workshop
+```
+
+### **Creación de entorno de pruebas K8s con minikube**
 
 ```bash
 # install kubectl
@@ -81,7 +91,7 @@ minikube tunnel > /dev/null &
 minikube dashboard > /dev/null &
 ```
 
-### **Creación de namespaces**
+### **Creación de namespaces K8s**
 ```bash
 # create namespace testing
 kubectl apply -f src/base/testing-ns.yaml
@@ -187,10 +197,9 @@ pod-network-loss          6s
 
 ### **Despliegue servicios monitorización: Prometheus + Grafana**
 
-Litmus permite exportar la información de los experimentos a Prometheus a través de *chaos-exporter*.
+Litmus permite exportar las métricas de los experimentos a Prometheus a través de *chaos-exporter*.
 
 ```bash
-# create namespace litmus
 kubectl -n ${MONITORING_NAMESPACE} apply -f src/litmus/monitoring/utils/prometheus/prometheus-operator/
 
 kubectl -n ${MONITORING_NAMESPACE} apply -f src/litmus/monitoring/utils/metrics-exporters-with-service-monitors/node-exporter/
@@ -216,18 +225,22 @@ Para este workshop hemos personalizado un dashboard de grafana donde visualizare
 
 - Timelime de experimentos ejecutados
 - 4 gráficas tipo "Gauge" con número de total de experimentos, estado Pass, estado Fail y estado Awaited.
-- Consumo de cpu a nivel POD (app-sample)
+- Consumo de CPU nivel nodo
+- Consumo de CPU a nivel POD (app-sample)
+- Consumo de memoria nivel nodo
 - Consumo de memoria a nivel POD (app-sample)
+- Tráfico red (IN/OUT) nivel nodo
+- Tráfico red (IN/OUT) nivel POD (app-sample)
 
 Datos acceso grafana: 
 - usuario: admin
 - password: admin
 
-![others-exp](./docs/img/others-exp.png)
+![others-exp](./docs/img/grafana-main.png)
 
 ### **Creación de anotación "litmuschaos"**
 
-Ya tenemos todos los componentes de litmus desplegados. 
+Para habilitar la ejecución de experimentos contra nuestro deployment, necesitamos añadir la anotación *litmuschaos.io/chaos="true"*. Como veremos más adelante, todos los experimentos tienen la propiedad *annotationCheck: "true"*.
 
 ```bash
 # add annotate (enable chaos)
@@ -517,7 +530,7 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréi
 
 
 
-#### **pod-autoscaler**
+#### **Pod autoscaler**
 
 - **Descripción:** permite escalar las réplicas para testear el autoescalado en el nodo.
 
@@ -554,7 +567,7 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréi
                 value: "10"
     ```
 
-- **Hipótesis:** Pendiete 
+- **Hipótesis:** Disponemos de un HPA con min = 2 y max = 10. Con la ejecución de este experimento queremos validar que nuestro nodo es capaz de escalar a 10 réplicas (el máx establecido en el HPA). Cuando ejecutemos el experimento, se crearán 10 réplicas y en ningún momento tendrémos pérdida de servicio. Nuestro HPA tiene establecido el parámetro "--horizontal-pod-autoscaler-downscale-stabilization" a 300s, por lo que durante ese intervalo tendremos 10 réplicas en estado "Running" y transcurrido ese intervalo, volveremos a tener 2 réplicas. 
 
 - **Creación de SA, Role y RoleBinding**
 
@@ -591,7 +604,7 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréi
         probePollingInterval: 2
     ```
 
-- **Resultado:** Pendiente
+- **Resultado:**
 
     ```bash
     $ kubectl describe chaosresult app-sample-chaos-pod-autoscaler  -n "${TESTING_NAMESPACE}"
@@ -628,21 +641,21 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréi
     
     NAME                          READY   STATUS        RESTARTS   AGE
     app-sample-6c48f8c4cc-5kzpg   0/1     Completed     0          39s
-    app-sample-6c48f8c4cc-74lvl   1/1     Running       2          32m
+    app-sample-6c48f8c4cc-74lvl   0/1     Running       2          32m
     app-sample-6c48f8c4cc-bflws   0/1     Completed     0          39s
     app-sample-6c48f8c4cc-c5ls8   0/1     Completed     0          39s
     app-sample-6c48f8c4cc-d9zj4   0/1     Completed     0          39s
     app-sample-6c48f8c4cc-f2xnt   0/1     Completed     0          39s
     app-sample-6c48f8c4cc-f7qdl   0/1     Completed     0          39s
     app-sample-6c48f8c4cc-ff84v   0/1     Completed     0          39s
-    app-sample-6c48f8c4cc-k29rr   1/1     Completed     0          39s
+    app-sample-6c48f8c4cc-k29rr   0/1     Completed     0          39s
     app-sample-6c48f8c4cc-l5fqp   0/1     Completed     0          39s
     app-sample-6c48f8c4cc-m587t   0/1     Completed     0          39s
     app-sample-6c48f8c4cc-msdmj   1/1     Running       0          32m
     app-sample-6c48f8c4cc-n5h6l   0/1     Completed     0          39s
     app-sample-6c48f8c4cc-qr5nd   0/1     Completed     0          39s
-    app-sample-chaos-runner       1/1     Completed     0          47s
-    pod-autoscaler-95wa6x-858jv   1/1     Completed     0          45s
+    app-sample-chaos-runner       0/1     Completed     0          47s
+    pod-autoscaler-95wa6x-858jv   0/1     Completed     0          45s
     ```
 
     ![pod-autoscaler](./docs/img/pod-autoscaler.png)
@@ -683,10 +696,10 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréi
                 value: "60" # in seconds
 
               - name: PODS_AFFECTED_PERC
-                value: "2"
+                value: "0"
     ```
 
-- **Hipótesis:** Pendiente. 
+- **Hipótesis:**  Disponemos de un HPA con min = 2 y max = 10. Con la ejecucicón de este experimento queremos validar que nuestro HPA funciona correctamente. Tenemos establecido un targetCPUUtilizationPercentage=50%, lo que quiere decir que si inyectamos consumo de CPU en un pod, el HPA debe establecer el número de réplicas a 3 (2 min + 1 autoscaler). En ningún momento debemos tener pérdida de servicio. Nuestro HPA tiene establecido el parámetro "--horizontal-pod-autoscaler-downscale-stabilization" a 300s, por lo que durante ese intervalo tendremos 10 réplicas en estado "Running" y transcurrido ese intervalo, volveremos a tener 2 réplicas.
 
 - **Creación de SA, Role y RoleBinding**
 
@@ -700,7 +713,7 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréi
     kubectl apply -f src/litmus/pod-cpu-hog/chaos-engine-pod-cpu-hog.yaml -n "${TESTING_NAMESPACE}"
     ```
 
-- **Observaciones:**
+- **Observaciones:** durante el experimento vemos 2 pod en estado "Runnning". Se comienza a inyectar consumo en uno de los POD y se autoescala a 3 réplicas. A los 300s se vuelve a tener 2 réplicas.
 
 - **Validación:** Peticiones get al balanceador con respuesta 200.
 
@@ -723,7 +736,7 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréi
         probePollingInterval: 2
     ```
 
-- **Resultado:** Pendiente
+- **Resultado:** resultado "Pass" (tres pods en estado "Running", sin pérdida de servicio durante la duración del experimento)
 
     ```bash
     $ kubectl describe chaosresult app-sample-chaos-pod-cpu-hog -n "${TESTING_NAMESPACE}" 
@@ -756,10 +769,12 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréi
 
     $ kubectl get pods -n testing
 
-      NAME                          READY   STATUS    RESTARTS   AGE
-      app-sample-6c48f8c4cc-74lvl   1/1     Running   2          56m
-      app-sample-6c48f8c4cc-msdmj   1/1     Running   0          56m
-      app-sample-6c48f8c4cc-zbl9m   1/1     Running   0          61s
+      NAME                          READY   STATUS      RESTARTS   AGE
+      app-sample-6c48f8c4cc-74lvl   1/1     Running     6          46m
+      app-sample-6c48f8c4cc-msdmj   1/1     Running     0          46m
+      app-sample-5c5575cdb7-hq5gs   1/1     Running     0          49s
+      app-sample-chaos-runner       0/1     Completed   0          104s
+      pod-cpu-hog-mpen59-zcpr6      0/1     Completed   0          103s
     ```
 
     ![pod-cpu](./docs/img/pod-cpu.png)
@@ -977,7 +992,58 @@ spec:
     annotationCheck: 'true'
 ```
 
-### **Litmus UI Portal**
+## **LitmusChaos + *Load Test Performance* con Jmeter**
+
+```bash
+curl -L https://ftp.cixug.es/apache//jmeter/binaries/apache-jmeter-5.4.1.tgz --output /tmp/apache-jmeter.tgz
+tar zxvf /tmp/apache-jmeter.tgz && mv apache-jmeter-5.4.1 apache-jmeter
+
+# install plugins-manager
+curl -L https://jmeter-plugins.org/get/ --output apache-jmeter/lib/ext/jmeter-plugins-manager-1.6.jar
+
+# install bzm - Concurrency Thread Group
+curl -L https://repo1.maven.org/maven2/kg/apc/jmeter-plugins-casutg/2.9/jmeter-plugins-casutg-2.9.jar --output apache-jmeter/lib/ext/jmeter-plugins-casutg-2.9.jar
+curl -L https://repo1.maven.org/maven2/kg/apc/jmeter-plugins-cmn-jmeter/0.6/jmeter-plugins-cmn-jmeter-0.6.jar --output apache-jmeter/lib/jmeter-plugins-cmn-jmeter-0.6.jar
+curl -L https://repo1.maven.org/maven2/kg/apc/cmdrunner/2.2/cmdrunner-2.2.jar --output apache-jmeter/lib/cmdrunner-2.2.jar
+curl -L https://repo1.maven.org/maven2/net/sf/json-lib/json-lib/2.4/json-lib-2.4.jar --output apache-jmeter/lib/json-lib-2.4-jdk15.jar
+
+
+curl -L https://repo1.maven.org/maven2/kg/apc/jmeter-plugins-graphs-basic/2.0/jmeter-plugins-graphs-basic-2.0.jar --output apache-jmeter/lib/ext/jmeter-plugins-graphs-basic-2.0.jar
+curl -L https://repo1.maven.org/maven2/kg/apc/jmeter-plugins-graphs-additional/2.0/jmeter-plugins-graphs-additional-2.0.jar --output apache-jmeter/lib/ext/jmeter-plugins-graphs-additional-2.0.jar
+
+
+
+
+url=$(minikube service app-sample --url -n "${TESTING_NAMESPACE}")
+
+HOST_APP_SAMPLE=$(echo ${url} | cut -d/ -f3 | cut -d: -f1)
+PORT_APP_SAMPLE=$(echo ${url} | cut -d: -f3)
+```
+
+
+```bash
+TARGET_RATE=200
+RAMP_UP_TIME=60
+RAMP_UP_STEPS=1
+
+# GUI mode
+bash apache-jmeter/bin/jmeter.sh -t src/jmeter/litmus-k8s-workshop.jmx -f -l apache-jmeter/logs/result.jtl -j apache-jmeter/logs/jmeter.log -Jhost=${HOST_APP_SAMPLE} -Jport=${PORT_APP_SAMPLE} -Jtarget_rate=${TARGET_RATE} -Jramp_up_time=${RAMP_UP_TIME} -Jramp_up_steps=${RAMP_UP_STEPS}
+```
+
+```bash
+kubectl apply -f src/litmus/pod-network-loss/pod-network-loss-sa.yaml -n "${TESTING_NAMESPACE}"
+kubectl apply -f src/litmus/pod-network-loss/chaos-engine-pod-network-loss.yaml  -n "${TESTING_NAMESPACE}"
+
+TARGET_RATE=200
+RAMP_UP_TIME=60
+RAMP_UP_STEPS=1
+
+bash apache-jmeter/bin/jmeter.sh -n -t src/jmeter/litmus-k8s-workshop.jmx -f -l apache-jmeter/logs/result.jtl -j apache-jmeter/logs/jmeter.log -Jhost=${HOST_APP_SAMPLE} -Jport=${PORT_APP_SAMPLE} -Jtarget_rate=${TARGET_RATE} -Jramp_up_time=${RAMP_UP_TIME} -Jramp_up_steps=${RAMP_UP_STEPS}
+
+rm -rf apache-jmeter/logs/report && bash apache-jmeter/bin/jmeter.sh -g apache-jmeter/logs/result.jtl -o apache-jmeter/logs/report
+```
+
+## **Litmus UI Portal**
 
 Litmus dispone de un portal para poder realizar experimentos sin necesidad utilizar la consola. Dispone de las siguientes funcionalidades:
 
@@ -1014,8 +1080,15 @@ En este workshop
 
 Elaborar un plan de pruebas que te permita conocer el comportamiento íntegro de tu sistema puede ser una tarea relativamente compleja.En este workshop hemos trabajado la inyección de errores en kubernetes utilizando un único servicio bajo un único nodo, pero los sistemas distribuidos suelen ser mucho más complejos: decenas de microservicios ejecutando en múltiples nodos de k8s sobre infraestructura cloud, con alta disponibilidad implementada con multi-AZ/multi-region, comunicaciones con on-premise, etc.
 
+## **Referencias**
+
+- [Litmus official web](https://litmuschaos.io/)
+- [Litmus GitHub](https://github.com/litmuschaos/litmu)
+- [Principles of Chaos Engineering](https://principlesofchaos.org/)
+- [Chaos Engineering: the history, principles and practice](https://www.gremlin.com/community/tutorials/chaos-engineering-the-history-principles-and-practice/)
+
 ## **Licencia**
-Este workshop está licenciado bajo licencia MIT - ver [LICENSE](LICENSE) para más detalle.
+Este workshop está licenciado bajo licencia MIT (ver [LICENSE](LICENSE) para más detalle).
 
 ## **Autor**
 

@@ -10,66 +10,14 @@
         "iconColor": "rgba(0, 211, 255, 1)",
         "name": "Annotations & Alerts",
         "type": "dashboard"
-      },
-      {
-        "datasource": "DS_PROMETHEUS",
-        "enable": true,
-        "expr": "litmuschaos_awaited_experiments{chaosresult_name=\"catalogue-pod-cpu-hog-pod-cpu-hog\", chaosresult_namespace=\"litmus\"}",
-        "hide": false,
-        "iconColor": "rgba(255, 96, 96, 1)",
-        "name": "catalogue-pod-cpu-hog",
-        "showIn": 0,
-        "step": "1s",
-        "tagKeys": "litmus, chaos",
-        "textFormat": "pod-cpu-hog",
-        "titleFormat": "catalogue-chaos"
-      },
-      {
-        "datasource": "DS_PROMETHEUS",
-        "enable": true,
-        "expr": "litmuschaos_awaited_experiments{chaosresult_name=\"orders-pod-memory-hog-pod-memory-hog\", chaosresult_namespace=\"litmus\"}",
-        "hide": false,
-        "iconColor": "rgba(255, 96, 96, 1)",
-        "name": "orders-pod-memory-hog",
-        "showIn": 0,
-        "step": "1s",
-        "tagKeys": "litmus, chaos",
-        "textFormat": "pod-memory-hog",
-        "titleFormat": "orders-chaos"
-      },
-      {
-        "datasource": "DS_PROMETHEUS",
-        "enable": true,
-        "expr": "litmuschaos_awaited_experiments{chaosresult_name=\"orders-node-memory-hog-node-memory-hog\",chaosresult_namespace=\"litmus\"}",
-        "hide": false,
-        "iconColor": "rgba(255, 96, 96, 1)",
-        "name": "orders-node-memory-hog",
-        "showIn": 0,
-        "step": "1s",
-        "tagKeys": "litmus, chaos",
-        "textFormat": "node-memory-hog",
-        "titleFormat": "orders-chaos",
-        "useValueForTime": false
-      },
-      {
-        "datasource": "DS_PROMETHEUS",
-        "enable": true,
-        "expr": "litmuschaos_awaited_experiments{chaosresult_name=\"catalogue-node-cpu-hog-node-cpu-hog\",chaosresult_namespace=\"litmus\"}",
-        "hide": false,
-        "iconColor": "rgba(255, 96, 96, 1)",
-        "name": "catalogue-node-cpu-hog",
-        "showIn": 0,
-        "step": "1s",
-        "tagKeys": "litmus, chaos",
-        "textFormat": "node-cpu-hog",
-        "titleFormat": "catalogue-chaos"
       }
     ]
   },
   "editable": true,
   "gnetId": null,
   "graphTooltip": 0,
-  "iteration": 1617099130390,
+  "id": 2,
+  "iteration": 1617353111125,
   "links": [],
   "panels": [
     {
@@ -125,7 +73,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.5.1",
+      "pluginVersion": "7.5.2",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -230,7 +178,7 @@
         "showThresholdMarkers": true,
         "text": {}
       },
-      "pluginVersion": "7.5.1",
+      "pluginVersion": "7.5.2",
       "targets": [
         {
           "expr": "sum(litmuschaos_passed_experiments + litmuschaos_failed_experiments)",
@@ -293,7 +241,7 @@
         "showThresholdMarkers": true,
         "text": {}
       },
-      "pluginVersion": "7.5.1",
+      "pluginVersion": "7.5.2",
       "targets": [
         {
           "expr": "sum(litmuschaos_passed_experiments)",
@@ -356,7 +304,7 @@
         "showThresholdMarkers": true,
         "text": {}
       },
-      "pluginVersion": "7.5.1",
+      "pluginVersion": "7.5.2",
       "targets": [
         {
           "expr": "sum(litmuschaos_failed_experiments)",
@@ -417,7 +365,7 @@
         "showThresholdMarkers": true,
         "text": {}
       },
-      "pluginVersion": "7.5.1",
+      "pluginVersion": "7.5.2",
       "targets": [
         {
           "expr": "sum(litmuschaos_awaited_experiments)",
@@ -430,6 +378,268 @@
       ],
       "title": "Queued Experiments",
       "type": "gauge"
+    },
+    {
+      "datasource": "$datasource",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "cores",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 7
+      },
+      "id": 64,
+      "interval": "",
+      "options": {
+        "graph": {},
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max",
+            "min",
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.5.2",
+      "targets": [
+        {
+          "expr": "instance:node_cpu_utilisation:rate1m",
+          "interval": "",
+          "legendFormat": "\"{{instance}}\"",
+          "refId": "B"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Chaos - Node - CPU Utilization",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "$datasource",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "Memory",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 7
+      },
+      "id": 65,
+      "options": {
+        "graph": {},
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max",
+            "min",
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.5.2",
+      "targets": [
+        {
+          "expr": "instance:node_memory_utilisation:ratio",
+          "interval": "",
+          "legendFormat": "\"{{instance}}\"",
+          "refId": "B"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Chaos - Node - Memory Utilization",
+      "type": "timeseries"
+    },
+    {
+      "datasource": "$datasource",
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "bytes",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "decbytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 7
+      },
+      "id": 76,
+      "options": {
+        "graph": {},
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max",
+            "min",
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.5.2",
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "sum(rate(node_network_receive_bytes_total[1m])) BY (instance)",
+          "interval": "",
+          "legendFormat": "\"{{instance}}\" (input)",
+          "refId": "B"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(rate(node_network_transmit_bytes_total[1m])) BY (instance)",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "\"{{instance}}\" (output)",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Chaos - Node - Network IN/OUT",
+      "type": "timeseries"
     },
     {
       "aliasColors": {},
@@ -447,9 +657,9 @@
       "fillGradient": 0,
       "gridPos": {
         "h": 15,
-        "w": 12,
+        "w": 8,
         "x": 0,
-        "y": 7
+        "y": 15
       },
       "hiddenSeries": false,
       "id": 62,
@@ -476,7 +686,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.5.1",
+      "pluginVersion": "7.5.2",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -552,9 +762,9 @@
       "fillGradient": 0,
       "gridPos": {
         "h": 15,
-        "w": 12,
-        "x": 12,
-        "y": 7
+        "w": 8,
+        "x": 8,
+        "y": 15
       },
       "hiddenSeries": false,
       "id": 63,
@@ -580,7 +790,7 @@
         "alertThreshold": true
       },
       "percentage": false,
-      "pluginVersion": "7.5.1",
+      "pluginVersion": "7.5.2",
       "pointradius": 5,
       "points": false,
       "renderer": "flot",
@@ -639,6 +849,100 @@
         "align": false,
         "alignLevel": null
       }
+    },
+    {
+      "datasource": "$datasource",
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisLabel": "bytes",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "graph": false,
+              "legend": false,
+              "tooltip": false
+            },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "never",
+            "spanNulls": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "decbytes"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 15,
+        "w": 8,
+        "x": 16,
+        "y": 15
+      },
+      "id": 77,
+      "options": {
+        "graph": {},
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max",
+            "min",
+            "sum"
+          ],
+          "displayMode": "table",
+          "placement": "bottom"
+        },
+        "tooltipOptions": {
+          "mode": "single"
+        }
+      },
+      "pluginVersion": "7.5.2",
+      "targets": [
+        {
+          "exemplar": true,
+          "expr": "sum(rate(container_network_receive_bytes_total{pod=~\"app-sample.+\"}[5m])) by (pod)",
+          "interval": "",
+          "legendFormat": "{{pod}} (input)",
+          "refId": "B"
+        },
+        {
+          "exemplar": true,
+          "expr": "sum(rate(container_network_transmit_bytes_total{pod=~\"app-sample.+\"}[5m])) by (pod)",
+          "hide": false,
+          "interval": "",
+          "legendFormat": "{{pod}} (output)",
+          "refId": "A"
+        }
+      ],
+      "timeFrom": null,
+      "timeShift": null,
+      "title": "Chaos - Pod - Network IN/OUT",
+      "type": "timeseries"
     }
   ],
   "refresh": "5s",
@@ -703,10 +1007,11 @@
     ]
   },
   "time": {
-    "from": "now-5m",
+    "from": "now-30m",
     "to": "now"
   },
   "timepicker": {
+    "hidden": false,
     "refresh_intervals": [
       "5s",
       "10s",
@@ -723,5 +1028,5 @@
   "timezone": "",
   "title": "Node and Pod Chaos Metrics",
   "uid": "nodepodmetrics",
-  "version": 1
+  "version": 5
 }
