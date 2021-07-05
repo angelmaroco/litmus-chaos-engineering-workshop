@@ -3,7 +3,7 @@
 ![litmus logo](./docs/img/cloud-native-way.png)
 
 - [**Chaos Engineering sobre Kubernetes con Litmus**](#chaos-engineering-sobre-kubernetes-con-litmus)
-  - [**Sobre *Chaos Engineering***](#sobre-chaos-engineering)
+  - [**Introducción**](#introducción)
   - [**Componentes Litmus**](#componentes-litmus)
   - [**Workshop**](#workshop)
     - [**Preparación de consola**](#preparación-de-consola)
@@ -14,19 +14,20 @@
     - [**Instalación *Chaos Experiments***](#instalación-chaos-experiments)
     - [**Despliegue servicios monitorización: Prometheus + Grafana**](#despliegue-servicios-monitorización-prometheus--grafana)
     - [**Creación de anotación "litmuschaos"**](#creación-de-anotación-litmuschaos)
-    - [**Detalle componetes de un experimento**](#detalle-componetes-de-un-experimento)
+    - [**Detalle componentes de un experimento**](#detalle-componentes-de-un-experimento)
       - [**Service Account, Role y RoleBinding**](#service-account-role-y-rolebinding)
       - [**Definición ChaosEngine**](#definición-chaosengine)
         - [**Especificaciones generales**](#especificaciones-generales)
         - [**Especificaciones de componentes**](#especificaciones-de-componentes)
         - [**Especificaciones de pruebas**](#especificaciones-de-pruebas)
+        - [**:star: Consejo: gestión de experimentos**](#star-consejo-gestión-de-experimentos)
     - [**Ejecución de experimentos**](#ejecución-de-experimentos)
       - [**Container Kill**](#container-kill)
       - [**Pod autoscaler**](#pod-autoscaler)
       - [**Pod CPU Hog**](#pod-cpu-hog)
       - [**Extra - Otros experimentos**](#extra---otros-experimentos)
     - [**Planificación de experimentos**](#planificación-de-experimentos)
-  - [**LitmusChaos + *Load Test Performance* con Jmeter**](#litmuschaos--load-test-performance-con-jmeter)
+  - [**LitmusChaos + *Load Test Performance* con Apache Jmeter**](#litmuschaos--load-test-performance-con-apache-jmeter)
   - [**Litmus UI Portal**](#litmus-ui-portal)
   - [**Guía Litmus para desarrolladores**](#guía-litmus-para-desarrolladores)
   - [***Chaos Engineering* en despliegue Continuo**](#chaos-engineering-en-despliegue-continuo)
@@ -36,7 +37,7 @@
   - [**Autor**](#autor)
   
 
-## **Sobre *Chaos Engineering***
+## **Introducción**
 
 ## **Componentes Litmus**
 
@@ -110,7 +111,7 @@ MONITORING_NAMESPACE="monitoring"
 ### **Despliegue de aplicación de test**
 
 Desplegamos una aplicación de test para poder ejecutar los experimentos de litmus.
-* **nginx-deployment.yaml**: creación de despliegue "app-sample", con recursos de cpu/memoria "limits"/"request" y configuración de "readinessProbe". Exponemos el servicio en el puerto 8080 a través de un balanceador. 
+* **nginx-deployment.yaml**: creación de despliegue "app-sample", con recursos de cpu/memoria "limits"/"request" y configuración de "readinessProbe". Exponemos el servicio en el puerto 80 a través de un balanceador. 
 * **nginx-hpa.yaml**: creación de *Horizontal Pod Autoscaler* (min 2 réplicas / max 10 réplicas)
 
 ```bash
@@ -134,6 +135,15 @@ kubectl get pods -n "${TESTING_NAMESPACE}"
 NAME                          READY   STATUS    RESTARTS   AGE
 app-sample-7ff489dbd5-82ppw   1/1     Running   0          45m
 app-sample-7ff489dbd5-jg9vh   1/1     Running   0          45m
+
+# get service
+kubectl get services -n "${TESTING_NAMESPACE}"
+
+# -----------------------------------------
+
+NAME         TYPE           CLUSTER-IP       EXTERNAL-IP      PORT(S)        AGE
+app-sample   LoadBalancer   10.109.196.239   10.109.196.239   80:30020/TCP   3m54s
+
 ```
 
 :information_source: En **PANEL 2** ejecutar: 
@@ -264,7 +274,7 @@ Replicas:               2 desired | 2 updated | 2 total | 2 available | 0 unavai
 StrategyType:           RollingUpdate
 ```
 
-### **Detalle componetes de un experimento**
+### **Detalle componentes de un experimento**
 
 #### **Service Account, Role y RoleBinding**
 
@@ -332,7 +342,7 @@ subjects:
 
 #### **Definición ChaosEngine**
 
-Para facilitar la comprensión, hemos dividido en 3 secciones el contenido de un experimiento. Podéis encontrar todas las definiciones dentro de *src/litmus/nombre-experimento/chaos-engine-*.yaml*
+Para facilitar la comprensión, hemos dividido en 3 secciones el contenido de un experimento. Podéis encontrar todas las definiciones dentro de *src/litmus/nombre-experimento/chaos-engine-*.yaml*
 
 
 ##### **Especificaciones generales**
@@ -378,9 +388,9 @@ En esta sección definiremos las variables de entorno propias de cada experiment
 ``` 
 
 ##### **Especificaciones de pruebas**
-En esta sección se informan los atributos para las pruebs de validación. El resultado del experiment dependerá del cumplimiento de la validación especificada. 
+En esta sección se informan los atributos para las pruebas de validación. El resultado del experimento dependerá del cumplimiento de la validación especificada. 
 
-En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréis consultar los tipo de pruebas disponibles.
+En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podeis consultar los tipos de pruebas disponibles.
 
 ```yaml
         probe:
@@ -401,6 +411,10 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréi
               probePollingInterval: 2         # Intervalo (segundos) entre peticiones
 
 ```
+
+##### **:star: Consejo: gestión de experimentos**
+
+Una de las principales ventajas de litmus es poder definir los experimentos de forma declarativa, lo que nos permite incluir fácilmente nuestros gestores de plantillas. Recomendamos el uso de [kustomize](https://kustomize.io/).
 
 ### **Ejecución de experimentos**
 
@@ -445,7 +459,7 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréi
                 value: "/var/run/docker.sock"
     ```
 
-- **Hipótesis:** Tenemos dos pods escuchando por el 8080 tras un balanceador. Nuestro deployment tiene readinessProbe con periodSeconds=1 y failureThreshold=1. Si uno de los pods deja de responder, el balanceador deja de enviar tráfico a ese pod y debe responder el otro. Hemos establecido el healthcheck del experimento cada 5s (tiempo máximo de respuesta aceptable) atacando directamente contra el balanceador, por lo que no deberíamos de tener pérdida de servicio en ningún momento. 
+- **Hipótesis:** Tenemos dos pods escuchando por el 80 tras un balanceador. Nuestro deployment tiene readinessProbe con periodSeconds=1 y failureThreshold=1. Si uno de los pods deja de responder, el balanceador deja de enviar tráfico a ese pod y debe responder el otro. Hemos establecido el healthcheck del experimento cada 5s (tiempo máximo de respuesta aceptable) atacando directamente contra el balanceador, por lo que no deberíamos de tener pérdida de servicio en ningún momento. 
 
 - **Creación de SA, Role y RoleBinding**
 
@@ -699,7 +713,7 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréi
                 value: "0"
     ```
 
-- **Hipótesis:**  Disponemos de un HPA con min = 2 y max = 10. Con la ejecucicón de este experimento queremos validar que nuestro HPA funciona correctamente. Tenemos establecido un targetCPUUtilizationPercentage=50%, lo que quiere decir que si inyectamos consumo de CPU en un pod, el HPA debe establecer el número de réplicas a 3 (2 min + 1 autoscaler). En ningún momento debemos tener pérdida de servicio. Nuestro HPA tiene establecido el parámetro "--horizontal-pod-autoscaler-downscale-stabilization" a 300s, por lo que durante ese intervalo tendremos 10 réplicas en estado "Running" y transcurrido ese intervalo, volveremos a tener 2 réplicas.
+- **Hipótesis:**  Disponemos de un HPA con min = 2 y max = 10. Con la ejecución de este experimento queremos validar que nuestro HPA funciona correctamente. Tenemos establecido un targetCPUUtilizationPercentage=50%, lo que quiere decir que si inyectamos consumo de CPU en un pod, el HPA debe establecer el número de réplicas a 3 (2 min + 1 autoscaler). En ningún momento debemos tener pérdida de servicio. Nuestro HPA tiene establecido el parámetro "--horizontal-pod-autoscaler-downscale-stabilization" a 300s, por lo que durante ese intervalo tendremos 10 réplicas en estado "Running" y transcurrido ese intervalo, volveremos a tener 2 réplicas.
 
 - **Creación de SA, Role y RoleBinding**
 
@@ -713,7 +727,7 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podréi
     kubectl apply -f src/litmus/pod-cpu-hog/chaos-engine-pod-cpu-hog.yaml -n "${TESTING_NAMESPACE}"
     ```
 
-- **Observaciones:** durante el experimento vemos 2 pod en estado "Runnning". Se comienza a inyectar consumo en uno de los POD y se autoescala a 3 réplicas. A los 300s se vuelve a tener 2 réplicas.
+- **Observaciones:** durante el experimento vemos 2 pods en estado "Runnning". Se comienza a inyectar consumo en uno de los POD y se autoescala a 3 réplicas. A los 300s se vuelve a tener 2 réplicas.
 
 - **Validación:** Peticiones get al balanceador con respuesta 200.
 
@@ -969,7 +983,7 @@ spec:
     annotationCheck: 'true'
 ```
 
-- **Ejecuciones períodicas en días específicos**
+- **Ejecuciones periódicas en días específicos**
 
 ```yaml
 apiVersion: litmuschaos.io/v1alpha1
@@ -992,7 +1006,17 @@ spec:
     annotationCheck: 'true'
 ```
 
-## **LitmusChaos + *Load Test Performance* con Jmeter**
+## **LitmusChaos + *Load Test Performance* con Apache Jmeter**
+
+Hasta el momento hemos realizado pruebas para validar cómo se comporta nuestro nodo de k8s bajo escenarios ideales, sin carga en el sistema por parte de los usuarios finales de la aplicación. 
+
+Por lo general, tendremos definidos SLIs/SLOs/SLAs los cuales hay que garantizar que cumplimos bajo cualquier eventualidad y para ello debemos de disponer de las herramientas adecuadas. En este caso, Litmus + [Apache Jmeter](https://jmeter.apache.org/) nos facilitarán la tarea de simular múltiples escenarios de concurrencia con inyección de anomalías en el sistema. Durante esta fase de pruebas es posible que tengamos que realizar ajustes de dimensionamiento, modificar alguna política de escalado o incluso que identifiquemos cuellos de botella y los equipos de desarrollo tengan que ajustar algún componente. 
+
+Para no desvirtuar el objetivo del workshop con la definición de SLIs/SLOs/SLAs, únicamente vamos a utilizar la métrica "Ratio de error", la cual vamos a establecer en < 2,00%.
+
+Planteamos un escenario ficticio donde nuestra aplicación tiene 200 usuarios concurrentes durante la mayor parte del tiempo de servicio.
+
+Procedemos a descargar el binario de JMeter y unos complementos para la visualización de gráficas:
 
 ```bash
 curl -L https://ftp.cixug.es/apache//jmeter/binaries/apache-jmeter-5.4.1.tgz --output /tmp/apache-jmeter.tgz
@@ -1011,15 +1035,16 @@ curl -L https://repo1.maven.org/maven2/net/sf/json-lib/json-lib/2.4/json-lib-2.4
 curl -L https://repo1.maven.org/maven2/kg/apc/jmeter-plugins-graphs-basic/2.0/jmeter-plugins-graphs-basic-2.0.jar --output apache-jmeter/lib/ext/jmeter-plugins-graphs-basic-2.0.jar
 curl -L https://repo1.maven.org/maven2/kg/apc/jmeter-plugins-graphs-additional/2.0/jmeter-plugins-graphs-additional-2.0.jar --output apache-jmeter/lib/ext/jmeter-plugins-graphs-additional-2.0.jar
 
-
-
-
+# Get url service
 url=$(minikube service app-sample --url -n "${TESTING_NAMESPACE}")
 
 HOST_APP_SAMPLE=$(echo ${url} | cut -d/ -f3 | cut -d: -f1)
 PORT_APP_SAMPLE=$(echo ${url} | cut -d: -f3)
 ```
 
+Vamos a validar que con el dimensionamiento actual cumplimos con los requisitos. Durante 60 segundos, ejecutamos 200 peticiones concurrentes, lo que se traduce en 12.000 peticiones.
+
+Este es el aspecto que tiene la GUI de JMeter con el plan de pruebas:
 
 ```bash
 TARGET_RATE=200
@@ -1029,6 +1054,41 @@ RAMP_UP_STEPS=1
 # GUI mode
 bash apache-jmeter/bin/jmeter.sh -t src/jmeter/litmus-k8s-workshop.jmx -f -l apache-jmeter/logs/result.jtl -j apache-jmeter/logs/jmeter.log -Jhost=${HOST_APP_SAMPLE} -Jport=${PORT_APP_SAMPLE} -Jtarget_rate=${TARGET_RATE} -Jramp_up_time=${RAMP_UP_TIME} -Jramp_up_steps=${RAMP_UP_STEPS}
 ```
+
+![jmeter-gui](./docs/img/jmeter-gui.png)
+
+Nuestro dimensionamiento base son dos réplicas de nuestro servicio app-sample:
+
+```bash
+kubectl get pods -n "${TESTING_NAMESPACE}"
+
+# ----------------------------------------
+
+NAME                         READY   STATUS    RESTARTS   AGE
+app-sample-d9d578cfb-55flr   1/1     Running   8          3h1m
+app-sample-d9d578cfb-klmxn   1/1     Running   0          3h2m
+```
+
+Ejecutamos el plan de pruebas sin GUI:
+
+```bash
+TARGET_RATE=200
+RAMP_UP_TIME=60
+RAMP_UP_STEPS=1
+
+bash apache-jmeter/bin/jmeter.sh -n -t src/jmeter/litmus-k8s-workshop.jmx -f -l apache-jmeter/logs/result.jtl -j apache-jmeter/logs/jmeter.log -Jhost=${HOST_APP_SAMPLE} -Jport=${PORT_APP_SAMPLE} -Jtarget_rate=${TARGET_RATE} -Jramp_up_time=${RAMP_UP_TIME} -Jramp_up_steps=${RAMP_UP_STEPS}
+
+rm -rf apache-jmeter/logs/report && bash apache-jmeter/bin/jmeter.sh -g apache-jmeter/logs/result.jtl -o apache-jmeter/logs/report
+```
+
+En la ruta "./apache-jmeter/logs/report/index.html" podéis ver un dashboard con los resultados.
+
+Hemos realizado 12000 peticiones con 200 usuarios concurrentes durante 60s. Estos son los resultados:
+- Ratio de error: 0.00%
+
+![jmeter-gui-001](./docs/img/jmeter-gui-001.png)
+
+Vamos a realizar la misma prueba pero inyectando tráfico en uno de los pods, lo que provocará que deje de responder (estado CrashLoopBackOff) y sólo tengamos una réplica.
 
 ```bash
 kubectl apply -f src/litmus/pod-network-loss/pod-network-loss-sa.yaml -n "${TESTING_NAMESPACE}"
@@ -1043,9 +1103,69 @@ bash apache-jmeter/bin/jmeter.sh -n -t src/jmeter/litmus-k8s-workshop.jmx -f -l 
 rm -rf apache-jmeter/logs/report && bash apache-jmeter/bin/jmeter.sh -g apache-jmeter/logs/result.jtl -o apache-jmeter/logs/report
 ```
 
+![jmeter-gui-002](./docs/img/jmeter-gui-002.png)
+
+**¿Qué ha sucedido?** 
+
+Al inyectar el experimento uno de los pods ha dejado de responder. Si nos fijamos en la definición del *deployment app-sample*, tenemos un *livenessProbe* cuya propiedad *periodSeconds* está establecida a 5 segundos y *failureThreshold* a 1 intento. Según nuestra configuración, el balanceador envía el 50% aprox. del tráfico a cada uno de los pods. Durante 5 segundos tenemos que el pod al que hemos inyectado una disrupción de red mediante el experimento no responde, lo que se traduce en error en la petición. Transcurridos los 5 segundos, el balanceador deja de enviar tráfico a ese pod y sólo tendremos un pod recibiendo peticiones. 
+
+Teníamos establecido un requisito que nuestro servicio no puede superar el 2% de errores bajo ningún escenario y hemos obtenido un 5,03% (603 peticiones erróneas), por lo que debemos realizar algún ajuste para cumplir el objetivo.
+
+**¿Cuál es el resultado del experimento?**
+
+```bash
+kubectl describe chaosresult app-sample-chaos-pod-network-loss  -n "${TESTING_NAMESPACE}"
+
+#-------------------------
+
+Events:
+Type    Reason   Age    From                           Message
+----    ------   ----   ----                           -------
+Normal  Awaited  4m16s  pod-network-loss-uf6hms-sk47z  experiment: pod-network-loss, Result: Awaited
+Normal  Pass     2m23s  pod-network-loss-uf6hms-sk47z  experiment: pod-network-loss, Result: Pass
+```
+
+Aunque nuestro requisito de ratio de error < 2,00% no se cumple, el experimento termina con resultado "Pass". Esto es debido a que Litmus tiene como criterio de salida "Pass" si el pod vuelve a estar disponible, lo cual se cumple. Aquí estamos haciendo uso de litmus para inyectar errores en el sistema.
+
+
+**¿Cómo podemos conseguir reducir el ratio de error?**
+
+Únicamente con fines ilustrativos, para resolver el problema que nos ocupa, vamos a incrementar el número de réplicas a 4 en el HorizontalPodAutoscaler y en el *deployment* disminuir el valor de la propiedad *periodSeconds* de 5s a 2s. Con esto pasamos a distribuir el 25% del tráfico a cada pod y además, el tiempo que el pod afectado por la disrupción de tráfico pasa de 5s a 2s, lo que debe traducirse en una reducción del ratio de error.
+
+:information_source: Nuestro sistema debe estar diseñado para adaptarse a la demanda en base a métricas (CPU, memoria, peticiones por segundo, latencia, I/O, etc.) siempre manteniendo los mínimos recursos activos. Con la expansión de servicios gestionados de kubernetes en los principales proveedores cloud (EKS/GKE/AKS), disponemos de múltiples estrategias para conseguir dicho objetivo.
+
+```bash
+kubectl edit deployment app-sample -n "${TESTING_NAMESPACE}" 
+
+kubectl edit HorizontalPodAutoscaler app-sample-ha -n "${TESTING_NAMESPACE}" 
+```
+
+Volvemos a ejecutar nuestro test:
+
+```bash
+kubectl apply -f src/litmus/pod-network-loss/pod-network-loss-sa.yaml -n "${TESTING_NAMESPACE}"
+kubectl apply -f src/litmus/pod-network-loss/chaos-engine-pod-network-loss.yaml  -n "${TESTING_NAMESPACE}"
+
+TARGET_RATE=200
+RAMP_UP_TIME=60
+RAMP_UP_STEPS=1
+
+bash apache-jmeter/bin/jmeter.sh -n -t src/jmeter/litmus-k8s-workshop.jmx -f -l apache-jmeter/logs/result.jtl -j apache-jmeter/logs/jmeter.log -Jhost=${HOST_APP_SAMPLE} -Jport=${PORT_APP_SAMPLE} -Jtarget_rate=${TARGET_RATE} -Jramp_up_time=${RAMP_UP_TIME} -Jramp_up_steps=${RAMP_UP_STEPS}
+
+rm -rf apache-jmeter/logs/report && bash apache-jmeter/bin/jmeter.sh -g apache-jmeter/logs/result.jtl -o apache-jmeter/logs/report
+```
+
+![jmeter-gui-002](./docs/img/jmeter-gui-003.png)
+
+Como podemos observar, nuestros cambios han provocado disminuir nuestro ratio de error a 1,60%, por lo que conseguimos cumplir nuestro objetivo de < 2,00%.
+
+**Nuestras conclusiones**
+
+DDDDD
+
 ## **Litmus UI Portal**
 
-Litmus dispone de un portal para poder realizar experimentos sin necesidad utilizar la consola. Dispone de las siguientes funcionalidades:
+Litmus dispone de un portal para poder realizar experimentos sin necesidad de utilizar la consola. Dispone de las siguientes funcionalidades:
 
 - Gestión de workflows: dispone de todos los experimentos pre-cargados listos para ejecutar en tu k8s.
 - MyHubs: permite conectar a repositorios públicos/privados para hacer uso de tus propios experimentos.
@@ -1065,7 +1185,7 @@ minikube service litmusportal-frontend-service -n  ${LITMUS_NAMESPACE} > /dev/nu
 
 ## **Guía Litmus para desarrolladores** 
 
-En la actualidad, litmus dispone de 48 experimentos a través de [Litmus ChaosHub](https://hub.litmuschaos.io/). Están desarrollados principalmente en Go, aunque disponen de una SDK para python y ansible. 
+En la actualidad, litmus dispone de 53 experimentos a través de [Litmus ChaosHub](https://hub.litmuschaos.io/). Están desarrollados principalmente en Go, aunque disponen de una SDK para python y ansible. 
 
 Los experimentos tienen una estructura bien definida (pre-checks, chaos-injection, litmus-probes, post-checks y result-updates) y es viable desarrollar experimentos que se ajusten a tus necesidades. 
 
@@ -1074,11 +1194,10 @@ En este [enlace](https://docs.litmuschaos.io/docs/devguide/) encontraréis toda 
 
 ## ***Chaos Engineering* en despliegue Continuo**
 
-En este workshop 
 
 ## **Consideraciones finales** 
 
-Elaborar un plan de pruebas que te permita conocer el comportamiento íntegro de tu sistema puede ser una tarea relativamente compleja.En este workshop hemos trabajado la inyección de errores en kubernetes utilizando un único servicio bajo un único nodo, pero los sistemas distribuidos suelen ser mucho más complejos: decenas de microservicios ejecutando en múltiples nodos de k8s sobre infraestructura cloud, con alta disponibilidad implementada con multi-AZ/multi-region, comunicaciones con on-premise, etc.
+Elaborar un plan de pruebas que te permita conocer el comportamiento integro de tu sistema puede ser una tarea relativamente compleja.En este workshop hemos trabajado la inyección de errores en kubernetes utilizando un único servicio bajo un único nodo, pero los sistemas distribuidos suelen ser mucho más complejos: decenas de microservicios ejecutando en múltiples nodos de k8s sobre infraestructura cloud, con alta disponibilidad implementada con multi-AZ/multi-region, comunicaciones con on-premise, etc.
 
 ## **Referencias**
 

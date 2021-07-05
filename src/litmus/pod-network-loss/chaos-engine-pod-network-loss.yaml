@@ -48,6 +48,6 @@ spec:
             mode: "Continuous"
             runProperties:
               probeTimeout: 5
-              interval: 5
+              interval: 1
               retry: 1
               probePollingInterval: 2
