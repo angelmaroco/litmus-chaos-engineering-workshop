@@ -1,11 +1,10 @@
-# **Chaos Engineering sobre Kubernetes con Litmus**
+# **Workshop *Chaos Engineering* sobre Kubernetes con Litmus**
 
 ![litmus logo](./docs/img/cloud-native-way.png)
 
-- [**Chaos Engineering sobre Kubernetes con Litmus**](#chaos-engineering-sobre-kubernetes-con-litmus)
-  - [**Introducción**](#introducción)
-  - [**Componentes Litmus**](#componentes-litmus)
-  - [**Workshop**](#workshop)
+- [**Workshop *Chaos Engineering* sobre Kubernetes con Litmus**](#workshop-chaos-engineering-sobre-kubernetes-con-litmus)
+    - [**Introducción**](#introducción)
+    - [**Objetivos del workshop**](#objetivos-del-workshop)
     - [**Preparación de consola**](#preparación-de-consola)
     - [**Clonación de repositorio**](#clonación-de-repositorio)
     - [**Creación de entorno de pruebas K8s con minikube**](#creación-de-entorno-de-pruebas-k8s-con-minikube)
@@ -27,27 +26,34 @@
       - [**Pod CPU Hog**](#pod-cpu-hog)
       - [**Extra - Otros experimentos**](#extra---otros-experimentos)
     - [**Planificación de experimentos**](#planificación-de-experimentos)
-  - [**LitmusChaos + *Load Test Performance* con Apache Jmeter**](#litmuschaos--load-test-performance-con-apache-jmeter)
+    - [**LitmusChaos + *Load Test Performance* con Apache Jmeter**](#litmuschaos--load-test-performance-con-apache-jmeter)
   - [**Litmus UI Portal**](#litmus-ui-portal)
   - [**Guía Litmus para desarrolladores**](#guía-litmus-para-desarrolladores)
-  - [***Chaos Engineering* en despliegue Continuo**](#chaos-engineering-en-despliegue-continuo)
   - [**Consideraciones finales**](#consideraciones-finales)
   - [**Referencias**](#referencias)
   - [**Licencia**](#licencia)
   - [**Autor**](#autor)
   
 
-## **Introducción**
 
-## **Componentes Litmus**
+### **Introducción**
 
-* **ChaosEngine:**
-* **ChaosExperiment**
-* **ChaosSchedule**
-* **ChaosResult**
-* **Litmus Probes**
+LitmusChaos nace con el objetivo de ayudar a los desarrolladores y SRE (Site reliability engineering ) de Kubernetes a mejorar la resilencia de sus aplicaciones/plataformas proporcionando un marco de trabajo completo.
 
-## **Workshop**
+El producto está liberado bajo licencia Apache-2.0, dispone de una ámplia comunidad de desarrolladores y desde 2020 pertenece a Cloud Native Computing Foundation.
+
+**¿Qué proporciona Litmus a diferencia de otras herramientas?**
+
+- Experimentos declarativos mediante K8S CRDs (Custom Resource Definition).
+- Múltiples experimentos predefinidos.
+- SDK en Go/Python/Ansible para desarrollar tus propios experimentos.
+### **Objetivos del workshop**
+
+1. Conocer los principales componentes de un experimento y realizar su despliegue
+2. Analizar detalladamente la ejecución de tres experimentos (criterios de entrada, hipótesis, observaciones y resultados)
+3. Visualizar los resultados mediante Prometheus/Grafana.
+4. Analizar un caso de pruebas de resiliencia + test de rendimiento con JMeter.
+5. Principales funcionalidades de Litmus UI Portal
 
 ### **Preparación de consola**
 
@@ -1006,7 +1012,7 @@ spec:
     annotationCheck: 'true'
 ```
 
-## **LitmusChaos + *Load Test Performance* con Apache Jmeter**
+### **LitmusChaos + *Load Test Performance* con Apache Jmeter**
 
 Hasta el momento hemos realizado pruebas para validar cómo se comporta nuestro nodo de k8s bajo escenarios ideales, sin carga en el sistema por parte de los usuarios finales de la aplicación. 
 
@@ -1190,10 +1196,6 @@ En la actualidad, litmus dispone de 53 experimentos a través de [Litmus ChaosHu
 Los experimentos tienen una estructura bien definida (pre-checks, chaos-injection, litmus-probes, post-checks y result-updates) y es viable desarrollar experimentos que se ajusten a tus necesidades. 
 
 En este [enlace](https://docs.litmuschaos.io/docs/devguide/) encontraréis toda la información para desarrolladores.
-
-
-## ***Chaos Engineering* en despliegue Continuo**
-
 
 ## **Consideraciones finales** 
 
