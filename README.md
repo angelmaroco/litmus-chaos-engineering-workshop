@@ -19,7 +19,7 @@
         - [**Especificaciones generales**](#especificaciones-generales)
         - [**Especificaciones de componentes**](#especificaciones-de-componentes)
         - [**Especificaciones de pruebas**](#especificaciones-de-pruebas)
-        - [**:star: Consejo: gestión de experimentos**](#star-consejo-gestión-de-experimentos)
+        - [**Gestión de experimentos**](#gestión-de-experimentos)
     - [**Ejecución de experimentos**](#ejecución-de-experimentos)
       - [**Container Kill**](#container-kill)
       - [**Pod autoscaler**](#pod-autoscaler)
@@ -38,22 +38,22 @@
 
 ### **Introducción**
 
-LitmusChaos nace con el objetivo de ayudar a los desarrolladores y SRE (Site reliability engineering ) de Kubernetes a mejorar la resilencia de sus aplicaciones/plataformas proporcionando un marco de trabajo completo.
-
-El producto está liberado bajo licencia Apache-2.0, dispone de una ámplia comunidad de desarrolladores y desde 2020 pertenece a Cloud Native Computing Foundation.
-
-**¿Qué proporciona Litmus a diferencia de otras herramientas?**
+LitmusChaos nace con el objetivo de ayudar a los desarrolladores y SRE (Site reliability engineering ) de Kubernetes a mejorar la resiliencia de sus aplicaciones/plataformas proporcionando un marco de trabajo completo. Sus principales ventajas respecto a otras herramientas son:
 
 - Experimentos declarativos mediante K8S CRDs (Custom Resource Definition).
 - Múltiples experimentos predefinidos.
 - SDK en Go/Python/Ansible para desarrollar tus propios experimentos.
+  
+El producto está liberado bajo licencia Apache-2.0, dispone de una amplia comunidad de desarrolladores y desde 2020 pertenece a Cloud Native Computing Foundation.
+
 ### **Objetivos del workshop**
 
 1. Conocer los principales componentes de un experimento y realizar su despliegue
 2. Analizar detalladamente la ejecución de tres experimentos (criterios de entrada, hipótesis, observaciones y resultados)
-3. Visualizar los resultados mediante Prometheus/Grafana.
-4. Analizar un caso de pruebas de resiliencia + test de rendimiento con JMeter.
-5. Principales funcionalidades de Litmus UI Portal
+3. Ver las múltiples opciones referentes a planificación de experimentos.
+4. Visualizar los resultados mediante Prometheus/Grafana.
+5. Analizar un caso de pruebas de resiliencia + test de rendimiento con JMeter.
+6. Principales funcionalidades de Litmus UI Portal
 
 ### **Preparación de consola**
 
@@ -74,6 +74,8 @@ cd litmus-chaos-engineering-workshop
 ```
 
 ### **Creación de entorno de pruebas K8s con minikube**
+
+Para este workshop vamos a utilizar minikube pero Litmus puede ser desplegado en cualquier servicio gestionado tipo EKS/AKS/GKE.
 
 ```bash
 # install kubectl
@@ -418,7 +420,7 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podeis 
 
 ```
 
-##### **:star: Consejo: gestión de experimentos**
+##### **Gestión de experimentos**
 
 Una de las principales ventajas de litmus es poder definir los experimentos de forma declarativa, lo que nos permite incluir fácilmente nuestros gestores de plantillas. Recomendamos el uso de [kustomize](https://kustomize.io/).
 
@@ -587,7 +589,7 @@ Una de las principales ventajas de litmus es poder definir los experimentos de f
                 value: "10"
     ```
 
-- **Hipótesis:** Disponemos de un HPA con min = 2 y max = 10. Con la ejecución de este experimento queremos validar que nuestro nodo es capaz de escalar a 10 réplicas (el máx establecido en el HPA). Cuando ejecutemos el experimento, se crearán 10 réplicas y en ningún momento tendrémos pérdida de servicio. Nuestro HPA tiene establecido el parámetro "--horizontal-pod-autoscaler-downscale-stabilization" a 300s, por lo que durante ese intervalo tendremos 10 réplicas en estado "Running" y transcurrido ese intervalo, volveremos a tener 2 réplicas. 
+- **Hipótesis:** Disponemos de un HPA con min = 2 y max = 10. Con la ejecución de este experimento queremos validar que nuestro nodo es capaz de escalar a 10 réplicas (el max. establecido en el HPA). Cuando ejecutemos el experimento, se crearán 10 réplicas y en ningún momento tendremos pérdida de servicio. Nuestro HPA tiene establecido el parámetro "--horizontal-pod-autoscaler-downscale-stabilization" a 300s, por lo que durante ese intervalo tendremos 10 réplicas en estado "Running" y transcurrido ese intervalo, volveremos a tener 2 réplicas. 
 
 - **Creación de SA, Role y RoleBinding**
 
@@ -1018,7 +1020,7 @@ Hasta el momento hemos realizado pruebas para validar cómo se comporta nuestro 
 
 Por lo general, tendremos definidos SLIs/SLOs/SLAs los cuales hay que garantizar que cumplimos bajo cualquier eventualidad y para ello debemos de disponer de las herramientas adecuadas. En este caso, Litmus + [Apache Jmeter](https://jmeter.apache.org/) nos facilitarán la tarea de simular múltiples escenarios de concurrencia con inyección de anomalías en el sistema. Durante esta fase de pruebas es posible que tengamos que realizar ajustes de dimensionamiento, modificar alguna política de escalado o incluso que identifiquemos cuellos de botella y los equipos de desarrollo tengan que ajustar algún componente. 
 
-Para no desvirtuar el objetivo del workshop con la definición de SLIs/SLOs/SLAs, únicamente vamos a utilizar la métrica "Ratio de error", la cual vamos a establecer en < 2,00%.
+Para no desvirtuar el objetivo del workshop con la definición de SLIs/SLOs/SLAs (más info [aquí](https://cloud.google.com/blog/products/devops-sre/sre-fundamentals-slis-slas-and-slos)), únicamente vamos a utilizar la métrica "Ratio de error", la cual vamos a establecer en < 2,00%.
 
 Planteamos un escenario ficticio donde nuestra aplicación tiene 200 usuarios concurrentes durante la mayor parte del tiempo de servicio.
 
@@ -1048,9 +1050,9 @@ HOST_APP_SAMPLE=$(echo ${url} | cut -d/ -f3 | cut -d: -f1)
 PORT_APP_SAMPLE=$(echo ${url} | cut -d: -f3)
 ```
 
-Vamos a validar que con el dimensionamiento actual cumplimos con los requisitos. Durante 60 segundos, ejecutamos 200 peticiones concurrentes, lo que se traduce en 12.000 peticiones.
+Vamos a validar que con el dimensionamiento actual cumplimos con los requisitos. Durante 60 segundos, ejecutamos 200 peticiones concurrentes, lo que se traduce en 12.000 peticiones. La petición será de tipo "GET" por el puerto 80 del balanceador. 
 
-Este es el aspecto que tiene la GUI de JMeter con el plan de pruebas:
+Este es el aspecto que tiene la GUI de JMeter con el plan de pruebas.
 
 ```bash
 TARGET_RATE=200
@@ -1165,10 +1167,6 @@ rm -rf apache-jmeter/logs/report && bash apache-jmeter/bin/jmeter.sh -g apache-j
 
 Como podemos observar, nuestros cambios han provocado disminuir nuestro ratio de error a 1,60%, por lo que conseguimos cumplir nuestro objetivo de < 2,00%.
 
-**Nuestras conclusiones**
-
-DDDDD
-
 ## **Litmus UI Portal**
 
 Litmus dispone de un portal para poder realizar experimentos sin necesidad de utilizar la consola. Dispone de las siguientes funcionalidades:
@@ -1183,7 +1181,6 @@ Litmus dispone de un portal para poder realizar experimentos sin necesidad de ut
 # install litmus portal
 kubectl apply -f src/litmus/portal/portal.yaml
 
-# kubectl apply -f src/litmus/portal.yaml
 minikube service litmusportal-frontend-service -n  ${LITMUS_NAMESPACE} > /dev/null &
 ```
 
@@ -1199,7 +1196,11 @@ En este [enlace](https://docs.litmuschaos.io/docs/devguide/) encontraréis toda 
 
 ## **Consideraciones finales** 
 
-Elaborar un plan de pruebas que te permita conocer el comportamiento integro de tu sistema puede ser una tarea relativamente compleja.En este workshop hemos trabajado la inyección de errores en kubernetes utilizando un único servicio bajo un único nodo, pero los sistemas distribuidos suelen ser mucho más complejos: decenas de microservicios ejecutando en múltiples nodos de k8s sobre infraestructura cloud, con alta disponibilidad implementada con multi-AZ/multi-region, comunicaciones con on-premise, etc.
+Debemos asumir que nuestro sistema no va a ser 100% tolerante a fallos pero ello no implica que pongamos todos los medios para minimizar los riesgos y en caso de producirse el desastre, lo hagamos de una forma relativamente controlada. La clave del éxito pasa por aplicar las prácticas de ingeniería del caos en fases tempranas del desarrollo, conocer las particularidades de la infraestructura donde ejecuta y disponer de herramientas adecuadas para automatizar las pruebas. 
+
+Un factor importante es dimensionar los esfuerzos en base a la criticidad del servicio que presta nuestro sistema: el esfuerzo en validar la resiliencia de un portal con información para empleados con 100 usuarios potenciales cuyo SLA es del 98% difiere mucho de una aplicación bancaria que realiza operaciones financieras a miles de usuarios concurrentes cuyo SLA es del 99.9XX%. En ambos casos el único método para verificar el cumplimiento del SLA es mediante test de resiliencia pero existe una notable diferencia respecto al esfuerzo que deberíamos dedicar.
+
+En este workshop nos hemos centrado en Litmus y Kubernetes pero cabe recordar que dependiendo del sistema que estemos desarrollando, tengamos que complementar nuestras pruebas con otras herramientas, principalmente las enfocadas a la inyección de fallos sobre infraestructura ([+ info](https://github.com/dastergon/awesome-chaos-engineering)).
 
 ## **Referencias**
 
@@ -1207,6 +1208,8 @@ Elaborar un plan de pruebas que te permita conocer el comportamiento integro de 
 - [Litmus GitHub](https://github.com/litmuschaos/litmu)
 - [Principles of Chaos Engineering](https://principlesofchaos.org/)
 - [Chaos Engineering: the history, principles and practice](https://www.gremlin.com/community/tutorials/chaos-engineering-the-history-principles-and-practice/)
+- [Awesome Chaos Engineering](https://github.com/dastergon/awesome-chaos-engineering)
+- [SRE Fundamentals - Google](https://cloud.google.com/blog/products/devops-sre/sre-fundamentals-sli-vs-slo-vs-sla)
 
 ## **Licencia**
 Este workshop está licenciado bajo licencia MIT (ver [LICENSE](LICENSE) para más detalle).
