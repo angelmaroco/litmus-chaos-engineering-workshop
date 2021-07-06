@@ -220,8 +220,6 @@ Litmus permite exportar las métricas de los experimentos a Prometheus a través
 ```bash
 kubectl -n ${MONITORING_NAMESPACE} apply -f src/litmus/monitoring/utils/prometheus/prometheus-operator/
 
-kubectl -n ${MONITORING_NAMESPACE} apply -f src/litmus/monitoring/utils/metrics-exporters-with-service-monitors/node-exporter/
-
 kubectl -n ${MONITORING_NAMESPACE} apply -f src/litmus/monitoring/utils/metrics-exporters-with-service-monitors/kube-state-metrics/
 
 kubectl -n ${MONITORING_NAMESPACE} apply -f src/litmus/monitoring/utils/alert-manager-with-service-monitor/
@@ -231,6 +229,8 @@ kubectl -n ${LITMUS_NAMESPACE} apply -f src/litmus/monitoring/utils/metrics-expo
 kubectl -n ${MONITORING_NAMESPACE} apply -f src/litmus/monitoring/utils/prometheus/prometheus-configuration/
 
 kubectl -n ${MONITORING_NAMESPACE} apply -f src/litmus/monitoring/utils/grafana/
+
+kubectl -n ${MONITORING_NAMESPACE} apply -f src/litmus/monitoring/utils/metrics-exporters-with-service-monitors/node-exporter/
 
 # wait deployment
 kubectl wait --for=condition=available --timeout=60s deployment/grafana -n ${MONITORING_NAMESPACE}
