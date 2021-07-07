@@ -38,11 +38,16 @@
 
 ### **Introducción**
 
-LitmusChaos nace con el objetivo de ayudar a los desarrolladores y SRE (Site reliability engineering ) de Kubernetes a mejorar la resiliencia de sus aplicaciones/plataformas proporcionando un marco de trabajo completo. Sus principales ventajas respecto a otras herramientas son:
+LitmusChaos nace con el objetivo de ayudar a desarrolladores y SREs (Site Reliability Engineering ) de Kubernetes a identificar puntos débiles y mejorar la resiliencia de sus aplicaciones/plataformas proporcionando un marco de trabajo completo. 
 
-- Experimentos declarativos mediante K8S CRDs (Custom Resource Definition).
-- Múltiples experimentos predefinidos.
-- SDK en Go/Python/Ansible para desarrollar tus propios experimentos.
+Sus principales ventajas respecto a otras herramientas son:
+
+- **Experimentos declarativos mediante K8S CRDs (Custom Resource Definition):** todos los componentes (planificación, ejecución, parametrización, etc.) de un experimento se definen dentro del ámbito de kubernetes haciendo uso de YAML.
+- **Múltiples experimentos predefinidos:** dispone de un conjunto de experimentos suficientemente amplio para dar cobertura a los principales recursos de K8s ()
+- **SDK en Go/Python/Ansible para desarrollar tus propios experimentos:** dispone de un metodología de desarrollo bien definida para construir experimentos que se adapten a tus necesidades particulares.
+- **Creación de workflows a través de GUI:** con Litmus UI Portal puedes crear workflows complejos utilizando todos los experimentos predefinidos mediante interfaz web.
+- **Fácil integración en pipelines CI/CD:** invocar y obtener el resultado de un experimento es extremadamente fácil.
+- **Exportación de métricas:** puedes exportar distintas métricas de tus experimentos directamente a Prometheus.
   
 El producto está liberado bajo licencia Apache-2.0, dispone de una amplia comunidad de desarrolladores y desde 2020 pertenece a Cloud Native Computing Foundation.
 
@@ -1096,7 +1101,7 @@ Hemos realizado 12000 peticiones con 200 usuarios concurrentes durante 60s. Esto
 
 ![jmeter-gui-001](./docs/img/jmeter-gui-001.png)
 
-Vamos a realizar la misma prueba pero inyectando tráfico en uno de los pods, lo que provocará que deje de responder (estado CrashLoopBackOff) y sólo tengamos una réplica.
+Vamos a realizar la misma prueba pero inyectando disrupcción de red en uno de los pods, lo que provocará que deje de responder (estado CrashLoopBackOff) y sólo tengamos disponible una réplica.
 
 ```bash
 kubectl apply -f src/litmus/pod-network-loss/pod-network-loss-sa.yaml -n "${TESTING_NAMESPACE}"
@@ -1115,7 +1120,7 @@ rm -rf apache-jmeter/logs/report && bash apache-jmeter/bin/jmeter.sh -g apache-j
 
 **¿Qué ha sucedido?** 
 
-Al inyectar el experimento uno de los pods ha dejado de responder. Si nos fijamos en la definición del *deployment app-sample*, tenemos un *livenessProbe* cuya propiedad *periodSeconds* está establecida a 5 segundos y *failureThreshold* a 1 intento. Según nuestra configuración, el balanceador envía el 50% aprox. del tráfico a cada uno de los pods. Durante 5 segundos tenemos que el pod al que hemos inyectado una disrupción de red mediante el experimento no responde, lo que se traduce en error en la petición. Transcurridos los 5 segundos, el balanceador deja de enviar tráfico a ese pod y sólo tendremos un pod recibiendo peticiones. 
+Al inyectar el experimento, uno de los pods ha dejado de responder. Si nos fijamos en la definición del *deployment app-sample*, tenemos un *livenessProbe* cuya propiedad *periodSeconds* está establecida a 5 segundos y *failureThreshold* a 1 intento. Según nuestra configuración, el balanceador envía el 50% aprox. del tráfico a cada uno de los pods. Durante 5 segundos tenemos que el pod al que hemos inyectado una disrupción de red mediante el experimento no responde, lo que se traduce en error en la petición. Transcurridos los 5 segundos, el balanceador deja de enviar tráfico a ese pod y sólo tendremos un pod recibiendo peticiones. 
 
 Teníamos establecido un requisito que nuestro servicio no puede superar el 2% de errores bajo ningún escenario y hemos obtenido un 5,03% (603 peticiones erróneas), por lo que debemos realizar algún ajuste para cumplir el objetivo.
 
