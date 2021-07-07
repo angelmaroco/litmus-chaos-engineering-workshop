@@ -1,32 +1,29 @@
-# **Workshop Ingeniería del Caos sobre Kubernetes con Litmus**
-
 ![header](./docs/img/header.png)
 
-- [**Workshop Ingeniería del Caos sobre Kubernetes con Litmus**](#workshop-ingeniería-del-caos-sobre-kubernetes-con-litmus)
-    - [**Introducción**](#introducción)
-    - [**Objetivos del workshop**](#objetivos-del-workshop)
-    - [**Preparación de consola**](#preparación-de-consola)
-    - [**Clonación de repositorio**](#clonación-de-repositorio)
-    - [**Creación de entorno de pruebas K8s con minikube**](#creación-de-entorno-de-pruebas-k8s-con-minikube)
-    - [**Creación de namespaces K8s**](#creación-de-namespaces-k8s)
-    - [**Despliegue de aplicación de test**](#despliegue-de-aplicación-de-test)
-    - [**Instalación *Chaos Experiments***](#instalación-chaos-experiments)
-    - [**Despliegue servicios monitorización: Prometheus + Grafana**](#despliegue-servicios-monitorización-prometheus--grafana)
-    - [**Creación de anotación "litmuschaos"**](#creación-de-anotación-litmuschaos)
-    - [**Detalle componentes de un experimento**](#detalle-componentes-de-un-experimento)
-      - [**Service Account, Role y RoleBinding**](#service-account-role-y-rolebinding)
-      - [**Definición ChaosEngine**](#definición-chaosengine)
-        - [**Especificaciones generales**](#especificaciones-generales)
-        - [**Especificaciones de componentes**](#especificaciones-de-componentes)
-        - [**Especificaciones de pruebas**](#especificaciones-de-pruebas)
-        - [**Gestión de experimentos**](#gestión-de-experimentos)
-    - [**Ejecución de experimentos**](#ejecución-de-experimentos)
-      - [**Container Kill**](#container-kill)
-      - [**Pod autoscaler**](#pod-autoscaler)
-      - [**Pod CPU Hog**](#pod-cpu-hog)
-      - [**Extra - Otros experimentos**](#extra---otros-experimentos)
-    - [**Planificación de experimentos**](#planificación-de-experimentos)
-    - [**LitmusChaos + *Load Test Performance* con Apache Jmeter**](#litmuschaos--load-test-performance-con-apache-jmeter)
+  - [**Introducción**](#introducción)
+  - [**Objetivos del workshop**](#objetivos-del-workshop)
+  - [**Preparación de consola**](#preparación-de-consola)
+  - [**Clonación de repositorio**](#clonación-de-repositorio)
+  - [**Creación de entorno de pruebas K8s con minikube**](#creación-de-entorno-de-pruebas-k8s-con-minikube)
+  - [**Creación de namespaces K8s**](#creación-de-namespaces-k8s)
+  - [**Despliegue de aplicación de test**](#despliegue-de-aplicación-de-test)
+  - [**Instalación *Chaos Experiments***](#instalación-chaos-experiments)
+  - [**Despliegue servicios monitorización: Prometheus + Grafana**](#despliegue-servicios-monitorización-prometheus--grafana)
+  - [**Creación de anotación "litmuschaos"**](#creación-de-anotación-litmuschaos)
+  - [**Detalle componentes de un experimento**](#detalle-componentes-de-un-experimento)
+    - [**Service Account, Role y RoleBinding**](#service-account-role-y-rolebinding)
+    - [**Definición ChaosEngine**](#definición-chaosengine)
+      - [**Especificaciones generales**](#especificaciones-generales)
+      - [**Especificaciones de componentes**](#especificaciones-de-componentes)
+      - [**Especificaciones de pruebas**](#especificaciones-de-pruebas)
+      - [**Gestión de experimentos**](#gestión-de-experimentos)
+  - [**Ejecución de experimentos**](#ejecución-de-experimentos)
+    - [**Container Kill**](#container-kill)
+    - [**Pod autoscaler**](#pod-autoscaler)
+    - [**Pod CPU Hog**](#pod-cpu-hog)
+    - [**Extra - Otros experimentos**](#extra---otros-experimentos)
+  - [**Planificación de experimentos**](#planificación-de-experimentos)
+  - [**LitmusChaos + *Load Test Performance* con Apache Jmeter**](#litmuschaos--load-test-performance-con-apache-jmeter)
   - [**Litmus UI Portal**](#litmus-ui-portal)
   - [**Guía Litmus para desarrolladores**](#guía-litmus-para-desarrolladores)
   - [**Consideraciones finales**](#consideraciones-finales)
@@ -36,7 +33,7 @@
   
 
 
-### **Introducción**
+## **Introducción**
 
 LitmusChaos nace con el objetivo de ayudar a desarrolladores y SREs (Site Reliability Engineering ) de Kubernetes a identificar puntos débiles y mejorar la resiliencia de sus aplicaciones/plataformas proporcionando un marco de trabajo completo. 
 
@@ -51,7 +48,7 @@ Sus principales ventajas respecto a otras herramientas son:
   
 El producto está liberado bajo licencia Apache-2.0, dispone de una amplia comunidad de desarrolladores y desde 2020 pertenece a Cloud Native Computing Foundation.
 
-### **Objetivos del workshop**
+## **Objetivos del workshop**
 
 1. Conocer los principales componentes de un experimento y realizar su despliegue
 2. Analizar detalladamente la ejecución de tres experimentos (criterios de entrada, hipótesis, observaciones y resultados)
@@ -60,7 +57,7 @@ El producto está liberado bajo licencia Apache-2.0, dispone de una amplia comun
 5. Analizar un caso de pruebas de resiliencia + test de rendimiento con JMeter.
 6. Principales funcionalidades de Litmus UI Portal
 
-### **Preparación de consola**
+## **Preparación de consola**
 
 Recomendamos abrir una consola y crear 4 paneles:
 
@@ -71,14 +68,14 @@ Recomendamos abrir una consola y crear 4 paneles:
    
 ![Console tabs](./docs/img/console-tabs.png)
 
-### **Clonación de repositorio**
+## **Clonación de repositorio**
 
 ```bash
 git clone git@github.com:angelmaroco/litmus-chaos-engineering-workshop.git
 cd litmus-chaos-engineering-workshop
 ```
 
-### **Creación de entorno de pruebas K8s con minikube**
+## **Creación de entorno de pruebas K8s con minikube**
 
 Para este workshop vamos a utilizar minikube pero Litmus puede ser desplegado en cualquier servicio gestionado tipo EKS/AKS/GKE.
 
@@ -105,7 +102,7 @@ minikube tunnel > /dev/null &
 minikube dashboard > /dev/null &
 ```
 
-### **Creación de namespaces K8s**
+## **Creación de namespaces K8s**
 ```bash
 # create namespace testing
 kubectl apply -f src/base/testing-ns.yaml
@@ -121,7 +118,7 @@ LITMUS_NAMESPACE="litmus"
 MONITORING_NAMESPACE="monitoring"
 ```
 
-### **Despliegue de aplicación de test**
+## **Despliegue de aplicación de test**
 
 Desplegamos una aplicación de test para poder ejecutar los experimentos de litmus.
 * **nginx-deployment.yaml**: creación de despliegue "app-sample", con recursos de cpu/memoria "limits"/"request" y configuración de "readinessProbe". Exponemos el servicio en el puerto 80 a través de un balanceador. 
@@ -178,7 +175,7 @@ watch -n 1 kubectl get pods -n "${TESTING_NAMESPACE}"
 kubectl get events -A -w
 ```
 
-### **Instalación *Chaos Experiments***
+## **Instalación *Chaos Experiments***
 
 ```bash
 # litmus operator & experiments
@@ -218,7 +215,7 @@ pod-network-latency       6s
 pod-network-loss          6s
 ```
 
-### **Despliegue servicios monitorización: Prometheus + Grafana**
+## **Despliegue servicios monitorización: Prometheus + Grafana**
 
 Litmus permite exportar las métricas de los experimentos a Prometheus a través de *chaos-exporter*.
 
@@ -261,7 +258,7 @@ Datos acceso grafana:
 
 ![others-exp](./docs/img/grafana-main.png)
 
-### **Creación de anotación "litmuschaos"**
+## **Creación de anotación "litmuschaos"**
 
 Para habilitar la ejecución de experimentos contra nuestro deployment, necesitamos añadir la anotación *litmuschaos.io/chaos="true"*. Como veremos más adelante, todos los experimentos tienen la propiedad *annotationCheck: "true"*.
 
@@ -287,9 +284,9 @@ Replicas:               2 desired | 2 updated | 2 total | 2 available | 0 unavai
 StrategyType:           RollingUpdate
 ```
 
-### **Detalle componentes de un experimento**
+## **Detalle componentes de un experimento**
 
-#### **Service Account, Role y RoleBinding**
+### **Service Account, Role y RoleBinding**
 
 Cada experimento debe tener asociado un ServiceAccount, un Role para definir permisos y un RoleBinding para relacionar el ServiceAccount/Role.
 
@@ -353,12 +350,12 @@ subjects:
     namespace: testing
 ```
 
-#### **Definición ChaosEngine**
+### **Definición ChaosEngine**
 
 Para facilitar la comprensión, hemos dividido en 3 secciones el contenido de un experimento. Podéis encontrar todas las definiciones dentro de *src/litmus/nombre-experimento/chaos-engine-*.yaml*
 
 
-##### **Especificaciones generales**
+#### **Especificaciones generales**
 
 En esta sección especificaremos atributos comunes a todos los experimentos. Para este workshop, debido a que estamos realizando los experimentos contra un único deployment, el único atributo que cambiará entre experimentos es "chaosServiceAccount".
 
@@ -383,7 +380,7 @@ spec:
   jobCleanUpPolicy: "delete" # Permite controlar la limpieza de recursos tras la ejecución. Especificar "retain" para debug.
 ```
 
-##### **Especificaciones de componentes**
+#### **Especificaciones de componentes**
 En esta sección definiremos las variables de entorno propias de cada experimento. Las variables "CHAOS_INTERVAL" y "TOTAL_CHAOS_DURATION" son comunes a todos los experimentos.
 ```yaml
   experiments:
@@ -400,7 +397,7 @@ En esta sección definiremos las variables de entorno propias de cada experiment
               value: "60"
 ``` 
 
-##### **Especificaciones de pruebas**
+#### **Especificaciones de pruebas**
 En esta sección se informan los atributos para las pruebas de validación. El resultado del experimento dependerá del cumplimiento de la validación especificada. 
 
 En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podeis consultar los tipos de pruebas disponibles.
@@ -425,13 +422,13 @@ En el siguiente [enlace](https://docs.litmuschaos.io/docs/litmus-probe/) podeis 
 
 ```
 
-##### **Gestión de experimentos**
+#### **Gestión de experimentos**
 
 Una de las principales ventajas de litmus es poder definir los experimentos de forma declarativa, lo que nos permite incluir fácilmente nuestros gestores de plantillas. Recomendamos el uso de [kustomize](https://kustomize.io/).
 
-### **Ejecución de experimentos**
+## **Ejecución de experimentos**
 
-#### **Container Kill**
+### **Container Kill**
 
 - **Descripción:** Aborta la ejecución del servicio docker dentro de un pod. La selección del pod es aleatoria.
 
@@ -557,7 +554,7 @@ Una de las principales ventajas de litmus es poder definir los experimentos de f
 
 
 
-#### **Pod autoscaler**
+### **Pod autoscaler**
 
 - **Descripción:** permite escalar las réplicas para testear el autoescalado en el nodo.
 
@@ -687,7 +684,7 @@ Una de las principales ventajas de litmus es poder definir los experimentos de f
 
     ![pod-autoscaler](./docs/img/pod-autoscaler.png)
 
-#### **Pod CPU Hog**
+### **Pod CPU Hog**
 
 - **Descripción:** permite consumir recursos de CPU dentro de POD
 
@@ -807,7 +804,7 @@ Una de las principales ventajas de litmus es poder definir los experimentos de f
     ![pod-cpu](./docs/img/pod-cpu.png)
 
 
-#### **Extra - Otros experimentos**
+### **Extra - Otros experimentos**
 
 - **pod-network-loss**
 
@@ -836,7 +833,7 @@ Una de las principales ventajas de litmus es poder definir los experimentos de f
   kubectl describe chaosresult app-sample-chaos-pod-delete -n "${TESTING_NAMESPACE}" 
   ```
 
-### **Planificación de experimentos**
+## **Planificación de experimentos**
 
 Litmus soporta el uso de planificaciones de experimentos. Dispone de las siguientes opciones:
 
@@ -1019,7 +1016,7 @@ spec:
     annotationCheck: 'true'
 ```
 
-### **LitmusChaos + *Load Test Performance* con Apache Jmeter**
+## **LitmusChaos + *Load Test Performance* con Apache Jmeter**
 
 Hasta el momento hemos realizado pruebas para validar cómo se comporta nuestro nodo de k8s bajo escenarios ideales, sin carga en el sistema por parte de los usuarios finales de la aplicación. 
 
