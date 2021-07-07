@@ -1,8 +1,8 @@
-# **Workshop *Chaos Engineering* sobre Kubernetes con Litmus**
+# **Workshop Ingeniería del Caos sobre Kubernetes con Litmus**
 
-![litmus logo](./docs/img/cloud-native-way.png)
+![header](./docs/img/header.png)
 
-- [**Workshop *Chaos Engineering* sobre Kubernetes con Litmus**](#workshop-chaos-engineering-sobre-kubernetes-con-litmus)
+- [**Workshop Ingeniería del Caos sobre Kubernetes con Litmus**](#workshop-ingeniería-del-caos-sobre-kubernetes-con-litmus)
     - [**Introducción**](#introducción)
     - [**Objetivos del workshop**](#objetivos-del-workshop)
     - [**Preparación de consola**](#preparación-de-consola)
@@ -1210,7 +1210,7 @@ En este workshop nos hemos centrado en Litmus y Kubernetes pero cabe recordar qu
 ## **Referencias**
 
 - [Litmus official web](https://litmuschaos.io/)
-- [Litmus GitHub](https://github.com/litmuschaos/litmu)
+- [Litmus GitHub](https://github.com/litmuschaos/litmus)
 - [Principles of Chaos Engineering](https://principlesofchaos.org/)
 - [Chaos Engineering: the history, principles and practice](https://www.gremlin.com/community/tutorials/chaos-engineering-the-history-principles-and-practice/)
 - [Awesome Chaos Engineering](https://github.com/dastergon/awesome-chaos-engineering)
@@ -1222,11 +1222,3 @@ Este workshop está licenciado bajo licencia MIT (ver [LICENSE](LICENSE) para m�
 ## **Autor**
 
 Ángel Maroco - [linkedIn](https://www.linkedin.com/in/angelmaroco/) | [github](https://github.com/angelmaroco)
-
-
-
-
-
-
-
-  
