@@ -70,6 +70,8 @@ Recomendamos abrir una consola y crear 4 paneles:
 
 ## **Clonación de repositorio**
 
+El código fuente está disponible en [github](https://github.com/angelmaroco/litmus-chaos-engineering-workshop).
+
 ```bash
 git clone https://github.com/angelmaroco/litmus-chaos-engineering-workshop.git
 cd litmus-chaos-engineering-workshop
