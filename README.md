@@ -7,7 +7,7 @@
   - [**Creación de entorno de pruebas K8s con minikube**](#creación-de-entorno-de-pruebas-k8s-con-minikube)
   - [**Creación de namespaces K8s**](#creación-de-namespaces-k8s)
   - [**Despliegue de aplicación de test**](#despliegue-de-aplicación-de-test)
-  - [**Instalación *Chaos Experiments***](#instalación-chaos-experiments)
+  - [**Despliegue *Chaos Experiments***](#despliegue-chaos-experiments)
   - [**Despliegue servicios monitorización: Prometheus + Grafana**](#despliegue-servicios-monitorización-prometheus--grafana)
   - [**Creación de anotación "litmuschaos"**](#creación-de-anotación-litmuschaos)
   - [**Detalle componentes de un experimento**](#detalle-componentes-de-un-experimento)
@@ -71,13 +71,24 @@ Recomendamos abrir una consola y crear 4 paneles:
 ## **Clonación de repositorio**
 
 ```bash
-git clone git@github.com:angelmaroco/litmus-chaos-engineering-workshop.git
+git clone https://github.com/angelmaroco/litmus-chaos-engineering-workshop.git
 cd litmus-chaos-engineering-workshop
 ```
 
 ## **Creación de entorno de pruebas K8s con minikube**
 
 Para este workshop vamos a utilizar minikube pero Litmus puede ser desplegado en cualquier servicio gestionado tipo EKS/AKS/GKE.
+
+Minikube requiere de un gestor de contenedores o máquinas virtuales (Docker, Hyperkit, Hyper-V, KVM, Parallels, Podman, VirtualBox, or VMWare).
+
+Recomendamos hacer uso de docker. En el caso de no estar disponible en el sistema, puedes realizar la instalación con los siguientes comandos: 
+
+```bash
+if ! [ -x "$(command -v docker)" ]; then
+    curl -fsSL https://get.docker.com -o /tmp/get-docker.sh
+    sh /tmp/get-docker.sh
+fi
+```
 
 ```bash
 # install kubectl
@@ -175,7 +186,7 @@ watch -n 1 kubectl get pods -n "${TESTING_NAMESPACE}"
 kubectl get events -A -w
 ```
 
-## **Instalación *Chaos Experiments***
+## **Despliegue *Chaos Experiments***
 
 ```bash
 # litmus operator & experiments
@@ -1026,7 +1037,9 @@ Para no desvirtuar el objetivo del workshop con la definición de SLIs/SLOs/SLAs
 
 Planteamos un escenario ficticio donde nuestra aplicación tiene 200 usuarios concurrentes durante la mayor parte del tiempo de servicio.
 
-Procedemos a descargar el binario de JMeter y unos complementos para la visualización de gráficas:
+Procedemos a descargar el binario de JMeter y unos complementos para la visualización de gráficas. 
+
+JMeter requiere Java JRE. En el caso de no estar disponible en el sistema, puedes realizar la instalación de [OpenJDK](https://adoptopenjdk.net/index.html). En caso contrario, omite este paso.
 
 ```bash
 curl -L https://ftp.cixug.es/apache//jmeter/binaries/apache-jmeter-5.4.1.tgz --output /tmp/apache-jmeter.tgz
@@ -1214,7 +1227,7 @@ En este workshop nos hemos centrado en Litmus y Kubernetes pero cabe recordar qu
 - [SRE Fundamentals - Google](https://cloud.google.com/blog/products/devops-sre/sre-fundamentals-sli-vs-slo-vs-sla)
 
 ## **Licencia**
-Este workshop está licenciado bajo licencia MIT (ver [LICENSE](LICENSE) para más detalle).
+Este workshop está licenciado bajo MIT (ver [LICENSE](LICENSE) para más detalle).
 
 ## **Autor**
 
